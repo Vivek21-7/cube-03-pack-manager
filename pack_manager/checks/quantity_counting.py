@@ -28,13 +28,22 @@ class QuantityCountingCheck(BaseCheck):
         expected_total = sum(item.expected_quantity for item in order.line_items)
         observed_total = len(detected_items)
 
-        # Check for ambiguity in counting due to overlaps or occlusions
-        for item in detected_items:
-            if item.is_ambiguous and "overlap" in (item.ambiguity_reason or "").lower():
+        # Check for photo lighting degradation
+        for p in photos:
+            if p.lighting_condition in ["blur", "severe_glare", "dark", "occluded"]:
                 return (
                     CheckVerdict.UNCERTAIN,
-                    0.50,
-                    f"Physical overlap/occlusion prevents reliable quantity count for '{item.detected_label}'."
+                    0.40,
+                    f"Photo quality ({p.lighting_condition}) prevents reliable item counting."
+                )
+
+        # Check for ambiguity in counting due to overlaps or occlusions
+        for item in detected_items:
+            if item.is_ambiguous:
+                return (
+                    CheckVerdict.UNCERTAIN,
+                    0.45,
+                    f"Ambiguous item '{item.detected_label}' ({item.ambiguity_reason or 'low clarity'}) prevents reliable quantity count."
                 )
 
         # Count per-SKU detected

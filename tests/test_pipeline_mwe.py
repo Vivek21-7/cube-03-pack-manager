@@ -115,6 +115,6 @@ def test_minimal_working_example_correct_order():
     assert len(result.discrepancies) == 0
 
     # Verify SHA-256 Content Hash is valid and tamper-evident
-    computed_hash = compute_evidence_hash(result.evidence_record.dict())
+    computed_hash = compute_evidence_hash(result.evidence_record.model_dump())
     assert result.evidence_record.content_hash == computed_hash
     print("\n[MWE PASS] Minimal Working Example passed all checks with verified SHA-256 hash:", computed_hash)

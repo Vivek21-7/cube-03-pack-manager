@@ -29,7 +29,19 @@ class DecisionSynthesisCheck(BaseCheck):
         uncertains = [c for c in checks if c.verdict == CheckVerdict.UNCERTAIN]
         passes = [c for c in checks if c.verdict == CheckVerdict.PASS]
 
-        # 1. Any FAIL -> STOP_AND_FIX
+        # 1. Any UNCERTAIN check means evidence is insufficient/ambiguous -> UNCERTAIN verdict
+        if uncertains:
+            uncertain_reasons = [f"[{c.check_key}]: {c.detail}" for c in uncertains]
+            min_conf = min(c.confidence for c in uncertains)
+            decision = DecisionEnum.STOP_AND_FIX
+            verdict = CheckVerdict.UNCERTAIN
+            detail = (
+                f"STOP & FIX (ACTION: RE-PHOTOGRAPH / INSPECT): {len(uncertains)} check(s) UNCERTAIN due to "
+                f"ambiguous visual evidence: {' | '.join(uncertain_reasons)}"
+            )
+            return decision, verdict, min_conf, detail
+
+        # 2. Any FAIL with clear evidence -> FAIL verdict (proven defect)
         if fails:
             fail_reasons = [f"[{c.check_key}]: {c.detail}" for c in fails]
             avg_conf = sum(c.confidence for c in fails) / len(fails)
@@ -37,18 +49,6 @@ class DecisionSynthesisCheck(BaseCheck):
             verdict = CheckVerdict.FAIL
             detail = f"STOP & FIX: {len(fails)} verification check(s) failed: {' | '.join(fail_reasons)}"
             return decision, verdict, avg_conf, detail
-
-        # 2. Any UNCERTAIN -> STOP_AND_FIX (with UNCERTAIN verdict)
-        if uncertains:
-            uncertain_reasons = [f"[{c.check_key}]: {c.detail}" for c in uncertains]
-            min_conf = min(c.confidence for c in uncertains)
-            decision = DecisionEnum.STOP_AND_FIX
-            verdict = CheckVerdict.UNCERTAIN
-            detail = (
-                f"STOP & FIX (ACTION REQUIRED: HUMAN INSPECTION / RE-PHOTOGRAPH): "
-                f"{len(uncertains)} check(s) produced UNCERTAIN verdict: {' | '.join(uncertain_reasons)}"
-            )
-            return decision, verdict, min_conf, detail
 
         # 3. All PASS -> SEAL
         avg_conf = sum(c.confidence for c in passes) / len(passes) if passes else 1.0
