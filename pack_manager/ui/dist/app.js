@@ -4,31 +4,59 @@
 
 let currentScenarioData = null;
 let lastVerificationResult = null;
-let activeScenarios = [];
 
-// Master Catalog definitions for quick UI references
-const UI_CATALOG = {
-  "SKU-TEE-BLK-M": { name: "Classic Crewneck T-Shirt - Black (M)", icon: "shirt" },
-  "SKU-TEE-NVY-M": { name: "Classic Crewneck T-Shirt - Navy Blue (M)", icon: "shirt" },
-  "SKU-TEE-BLK-L": { name: "Classic Crewneck T-Shirt - Black (L)", icon: "shirt" },
-  "SKU-MUG-CER-WHT": { name: "Ceramic Coffee Mug - Minimalist White", icon: "coffee" },
-  "SKU-MUG-CER-GRY": { name: "Ceramic Coffee Mug - Stone Grey", icon: "coffee" },
-  "SKU-CABLE-USB-C": { name: "Braided USB-C Cable (2m)", icon: "cable" },
-  "SKU-CABLE-LIGHTN": { name: "Braided Lightning Cable (2m)", icon: "cable" },
-  "SKU-NOTE-A5-DOT": { name: "Dotted Grid Journal - Emerald", icon: "book" },
-  "SKU-PEN-GEL-BLK": { name: "Precision Gel Pen 0.5mm", icon: "pen-tool" },
-  "SKU-BOTTLE-THERM": { name: "Vacuum Thermal Flask 750ml", icon: "cylinder" },
-  "SKU-PACK-TAPE-ROLL": { name: "Warehouse Packing Tape 50m", icon: "disc" },
+// Explanations for all 8 test scenarios
+const SCENARIO_EXPLAINERS = {
+  "CORRECT_ORDER": {
+    title: "Test Case 1: Correct Order (Clean Pack)",
+    text: "The customer ordered 1 Black T-Shirt and 1 Ceramic Mug. Both items are correctly present in the parcel with exact quantities. The agent verifies 100% bijective match across all 7 checks and issues SEAL.",
+    targetBadge: "<span class='badge-target-seal'>SEAL</span>"
+  },
+  "MISSING_ITEM": {
+    title: "Test Case 2: Missing Item (Shortage Defect)",
+    text: "The customer ordered 1 Black T-Shirt and 1 Thermal Flask. However, the packer omitted the Thermal Flask (only the shirt is inside). Check 5 ('missing_item_detection') fails, triggering STOP & FIX.",
+    targetBadge: "<span class='badge-target-stop'>STOP & FIX</span>"
+  },
+  "WRONG_ITEM": {
+    title: "Test Case 3: Wrong Item Variant (Colorway Mismatch)",
+    text: "The customer ordered a Black T-Shirt (SKU-TEE-BLK-M), but the packer accidentally packed a Navy Blue T-Shirt (SKU-TEE-NVY-M). Check 4 ('wrong_item_detection') catches the variant error and halts packaging.",
+    targetBadge: "<span class='badge-target-stop'>STOP & FIX</span>"
+  },
+  "EXTRA_ITEM": {
+    title: "Test Case 4: Extra Unordered Item (Surplus / Foreign Object)",
+    text: "The customer ordered 1 Journal, but a roll of warehouse packing tape (non-inventory tool) was accidentally left inside the parcel box. Check 6 ('extra_item_detection') flags the unmanifested object.",
+    targetBadge: "<span class='badge-target-stop'>STOP & FIX</span>"
+  },
+  "WRONG_QUANTITY": {
+    title: "Test Case 5: Wrong Quantity (Count Shortage)",
+    text: "The order calls for 3 Precision Gel Pens, but only 2 were placed in the package. Check 2 ('quantity_counting') detects count shortage (Expected: 3, Observed: 2) and halts sealing.",
+    targetBadge: "<span class='badge-target-stop'>STOP & FIX</span>"
+  },
+  "MULTI_IDENTICAL": {
+    title: "Test Case 6: Multiple Identical Products (4x Coffee Mugs)",
+    text: "The customer ordered 4 identical White Ceramic Mugs. The vision counter verifies all 4 instances without overlap confusion or double-counting, safely authorizing SEAL.",
+    targetBadge: "<span class='badge-target-seal'>SEAL</span>"
+  },
+  "VISUALLY_SIMILAR": {
+    title: "Test Case 7: Visually Similar Mixup (Two Black Shirts instead of 1 Black + 1 Navy)",
+    text: "The order requested 1 Black and 1 Navy T-Shirt. The packer mistakenly packed 2 Black T-Shirts. The agent detects the missing Navy colorway and surplus Black item, issuing STOP & FIX.",
+    targetBadge: "<span class='badge-target-stop'>STOP & FIX</span>"
+  },
+  "AMBIGUOUS_CAPTURE": {
+    title: "Test Case 8: Degraded / Blurry Photo (Uncertainty Handling)",
+    text: "The station camera capture has severe motion blur or low lighting. The agent strictly marks the check as UNCERTAIN rather than guessing, enforcing STOP & FIX for operator re-capture (never auto-SEAL).",
+    targetBadge: "<span class='badge-target-uncertain'>UNCERTAIN (RE-CAPTURE)</span>"
+  }
 };
 
-// Fallback preset scenario definitions
+// Preset scenario fixtures
 const PRESET_SCENARIOS = {
   "CORRECT_ORDER": {
     order: {
       order_id: "ORD-2026-001",
       package_id: "PKG-BOX-101",
       client_id: "MERCHANT-APEX",
-      organization_id: "3PL-LOGISTICS-HUB",
+      organization_id: "3PL-HUB-01",
       line_items: [
         { line_item_id: "L1", sku: "SKU-TEE-BLK-M", product_name: "Classic Crewneck T-Shirt - Black (M)", expected_quantity: 1 },
         { line_item_id: "L2", sku: "SKU-MUG-CER-WHT", product_name: "Ceramic Coffee Mug - Minimalist White", expected_quantity: 1 },
@@ -42,8 +70,8 @@ const PRESET_SCENARIOS = {
         lighting_condition: "standard",
         metadata: {
           simulated_detections: [
-            { detected_label: "Classic Crewneck T-Shirt - Black (M)", matched_sku: "SKU-TEE-BLK-M", confidence: 0.98 },
-            { detected_label: "Ceramic Coffee Mug - Minimalist White", matched_sku: "SKU-MUG-CER-WHT", confidence: 0.97 },
+            { detected_label: "Classic Crewneck T-Shirt - Black (M)", matched_sku: "SKU-TEE-BLK-M", confidence: 0.98, icon: "shirt" },
+            { detected_label: "Ceramic Coffee Mug - Minimalist White", matched_sku: "SKU-MUG-CER-WHT", confidence: 0.97, icon: "coffee" },
           ]
         }
       }
@@ -54,7 +82,7 @@ const PRESET_SCENARIOS = {
       order_id: "ORD-2026-002",
       package_id: "PKG-BOX-102",
       client_id: "MERCHANT-APEX",
-      organization_id: "3PL-LOGISTICS-HUB",
+      organization_id: "3PL-HUB-01",
       line_items: [
         { line_item_id: "L1", sku: "SKU-TEE-BLK-M", product_name: "Classic Crewneck T-Shirt - Black (M)", expected_quantity: 1 },
         { line_item_id: "L2", sku: "SKU-BOTTLE-THERM", product_name: "Vacuum Thermal Flask 750ml", expected_quantity: 1 },
@@ -68,7 +96,7 @@ const PRESET_SCENARIOS = {
         lighting_condition: "standard",
         metadata: {
           simulated_detections: [
-            { detected_label: "Classic Crewneck T-Shirt - Black (M)", matched_sku: "SKU-TEE-BLK-M", confidence: 0.98 },
+            { detected_label: "Classic Crewneck T-Shirt - Black (M)", matched_sku: "SKU-TEE-BLK-M", confidence: 0.98, icon: "shirt" },
           ]
         }
       }
@@ -79,7 +107,7 @@ const PRESET_SCENARIOS = {
       order_id: "ORD-2026-003",
       package_id: "PKG-BOX-103",
       client_id: "MERCHANT-APEX",
-      organization_id: "3PL-LOGISTICS-HUB",
+      organization_id: "3PL-HUB-01",
       line_items: [
         { line_item_id: "L1", sku: "SKU-TEE-BLK-M", product_name: "Classic Crewneck T-Shirt - Black (M)", expected_quantity: 1 },
       ]
@@ -92,7 +120,7 @@ const PRESET_SCENARIOS = {
         lighting_condition: "standard",
         metadata: {
           simulated_detections: [
-            { detected_label: "Classic Crewneck T-Shirt - Navy Blue (M)", matched_sku: "SKU-TEE-NVY-M", confidence: 0.96 },
+            { detected_label: "Classic Crewneck T-Shirt - Navy Blue (M)", matched_sku: "SKU-TEE-NVY-M", confidence: 0.96, icon: "shirt" },
           ]
         }
       }
@@ -103,7 +131,7 @@ const PRESET_SCENARIOS = {
       order_id: "ORD-2026-004",
       package_id: "PKG-BOX-104",
       client_id: "MERCHANT-APEX",
-      organization_id: "3PL-LOGISTICS-HUB",
+      organization_id: "3PL-HUB-01",
       line_items: [
         { line_item_id: "L1", sku: "SKU-NOTE-A5-DOT", product_name: "Dotted Grid Journal - Emerald", expected_quantity: 1 },
       ]
@@ -116,8 +144,8 @@ const PRESET_SCENARIOS = {
         lighting_condition: "standard",
         metadata: {
           simulated_detections: [
-            { detected_label: "Dotted Grid Journal - Emerald", matched_sku: "SKU-NOTE-A5-DOT", confidence: 0.97 },
-            { detected_label: "Warehouse Packing Tape 50m", matched_sku: "SKU-PACK-TAPE-ROLL", confidence: 0.95 },
+            { detected_label: "Dotted Grid Journal - Emerald", matched_sku: "SKU-NOTE-A5-DOT", confidence: 0.97, icon: "book" },
+            { detected_label: "Warehouse Packing Tape 50m", matched_sku: "SKU-PACK-TAPE-ROLL", confidence: 0.95, icon: "disc" },
           ]
         }
       }
@@ -128,7 +156,7 @@ const PRESET_SCENARIOS = {
       order_id: "ORD-2026-005",
       package_id: "PKG-BOX-105",
       client_id: "MERCHANT-APEX",
-      organization_id: "3PL-LOGISTICS-HUB",
+      organization_id: "3PL-HUB-01",
       line_items: [
         { line_item_id: "L1", sku: "SKU-PEN-GEL-BLK", product_name: "Precision Gel Pen 0.5mm", expected_quantity: 3 },
       ]
@@ -141,8 +169,8 @@ const PRESET_SCENARIOS = {
         lighting_condition: "standard",
         metadata: {
           simulated_detections: [
-            { detected_label: "Precision Gel Pen 0.5mm", matched_sku: "SKU-PEN-GEL-BLK", confidence: 0.96 },
-            { detected_label: "Precision Gel Pen 0.5mm", matched_sku: "SKU-PEN-GEL-BLK", confidence: 0.96 },
+            { detected_label: "Precision Gel Pen 0.5mm", matched_sku: "SKU-PEN-GEL-BLK", confidence: 0.96, icon: "pen-tool" },
+            { detected_label: "Precision Gel Pen 0.5mm", matched_sku: "SKU-PEN-GEL-BLK", confidence: 0.96, icon: "pen-tool" },
           ]
         }
       }
@@ -153,7 +181,7 @@ const PRESET_SCENARIOS = {
       order_id: "ORD-2026-006",
       package_id: "PKG-BOX-106",
       client_id: "MERCHANT-APEX",
-      organization_id: "3PL-LOGISTICS-HUB",
+      organization_id: "3PL-HUB-01",
       line_items: [
         { line_item_id: "L1", sku: "SKU-MUG-CER-WHT", product_name: "Ceramic Coffee Mug - Minimalist White", expected_quantity: 4 },
       ]
@@ -166,10 +194,10 @@ const PRESET_SCENARIOS = {
         lighting_condition: "standard",
         metadata: {
           simulated_detections: [
-            { detected_label: "Ceramic Coffee Mug - Minimalist White", matched_sku: "SKU-MUG-CER-WHT", confidence: 0.96 },
-            { detected_label: "Ceramic Coffee Mug - Minimalist White", matched_sku: "SKU-MUG-CER-WHT", confidence: 0.96 },
-            { detected_label: "Ceramic Coffee Mug - Minimalist White", matched_sku: "SKU-MUG-CER-WHT", confidence: 0.95 },
-            { detected_label: "Ceramic Coffee Mug - Minimalist White", matched_sku: "SKU-MUG-CER-WHT", confidence: 0.95 },
+            { detected_label: "Ceramic Coffee Mug - White", matched_sku: "SKU-MUG-CER-WHT", confidence: 0.96, icon: "coffee" },
+            { detected_label: "Ceramic Coffee Mug - White", matched_sku: "SKU-MUG-CER-WHT", confidence: 0.96, icon: "coffee" },
+            { detected_label: "Ceramic Coffee Mug - White", matched_sku: "SKU-MUG-CER-WHT", confidence: 0.95, icon: "coffee" },
+            { detected_label: "Ceramic Coffee Mug - White", matched_sku: "SKU-MUG-CER-WHT", confidence: 0.95, icon: "coffee" },
           ]
         }
       }
@@ -180,7 +208,7 @@ const PRESET_SCENARIOS = {
       order_id: "ORD-2026-007",
       package_id: "PKG-BOX-107",
       client_id: "MERCHANT-APEX",
-      organization_id: "3PL-LOGISTICS-HUB",
+      organization_id: "3PL-HUB-01",
       line_items: [
         { line_item_id: "L1", sku: "SKU-TEE-BLK-M", product_name: "Classic Crewneck T-Shirt - Black (M)", expected_quantity: 1 },
         { line_item_id: "L2", sku: "SKU-TEE-NVY-M", product_name: "Classic Crewneck T-Shirt - Navy Blue (M)", expected_quantity: 1 },
@@ -194,8 +222,8 @@ const PRESET_SCENARIOS = {
         lighting_condition: "standard",
         metadata: {
           simulated_detections: [
-            { detected_label: "Classic Crewneck T-Shirt - Black (M)", matched_sku: "SKU-TEE-BLK-M", confidence: 0.94 },
-            { detected_label: "Classic Crewneck T-Shirt - Black (M)", matched_sku: "SKU-TEE-BLK-M", confidence: 0.94 },
+            { detected_label: "Classic Crewneck T-Shirt - Black (M)", matched_sku: "SKU-TEE-BLK-M", confidence: 0.94, icon: "shirt" },
+            { detected_label: "Classic Crewneck T-Shirt - Black (M)", matched_sku: "SKU-TEE-BLK-M", confidence: 0.94, icon: "shirt" },
           ]
         }
       }
@@ -206,7 +234,7 @@ const PRESET_SCENARIOS = {
       order_id: "ORD-2026-008",
       package_id: "PKG-BOX-108",
       client_id: "MERCHANT-APEX",
-      organization_id: "3PL-LOGISTICS-HUB",
+      organization_id: "3PL-HUB-01",
       line_items: [
         { line_item_id: "L1", sku: "SKU-BOTTLE-THERM", product_name: "Vacuum Thermal Flask 750ml", expected_quantity: 1 },
       ]
@@ -225,7 +253,7 @@ const PRESET_SCENARIOS = {
 
 document.addEventListener("DOMContentLoaded", () => {
   if (window.lucide) lucide.createIcons();
-  loadScenario("CORRECT_ORDER");
+  loadScenario("CORRECT_ORDER", document.querySelector('.btn-preset[data-scenario="CORRECT_ORDER"]'));
   fetchEvalSummary();
 });
 
@@ -247,11 +275,21 @@ function switchTab(tabId) {
   if (window.lucide) lucide.createIcons();
 }
 
-function loadScenario(scenarioKey) {
+function loadScenario(scenarioKey, btnEl) {
   // Update button active state
   document.querySelectorAll(".btn-preset").forEach(btn => btn.classList.remove("active"));
-  const clickedBtn = Array.from(document.querySelectorAll(".btn-preset")).find(b => b.textContent.includes(scenarioKey.replace("_", " ")));
-  if (clickedBtn) clickedBtn.classList.add("active");
+  if (btnEl) {
+    btnEl.classList.add("active");
+  } else {
+    const matched = document.querySelector(`.btn-preset[data-scenario="${scenarioKey}"]`);
+    if (matched) matched.classList.add("active");
+  }
+
+  // Update explainer text
+  const explainer = SCENARIO_EXPLAINERS[scenarioKey] || SCENARIO_EXPLAINERS["CORRECT_ORDER"];
+  document.getElementById("explainerTitle").textContent = explainer.title;
+  document.getElementById("explainerText").textContent = explainer.text;
+  document.getElementById("explainerTarget").innerHTML = `Expected Decision: ${explainer.targetBadge}`;
 
   currentScenarioData = PRESET_SCENARIOS[scenarioKey] || PRESET_SCENARIOS["CORRECT_ORDER"];
 
@@ -266,16 +304,17 @@ function loadScenario(scenarioKey) {
   expBody.innerHTML = order.line_items.map(li => `
     <tr>
       <td><span class="badge-subtle">${li.sku}</span></td>
-      <td>${li.product_name}</td>
-      <td><strong>${li.expected_quantity}</strong></td>
+      <td><strong>${li.product_name}</strong></td>
+      <td style="font-size: 0.9rem; font-weight: 700; color: #2563eb;">${li.expected_quantity}</td>
     </tr>
   `).join("");
 
   // Update Camera Lighting badge
   const photo = currentScenarioData.photos[0];
   const lightingBadge = document.getElementById("cameraLightingBadge");
-  lightingBadge.textContent = photo.lighting_condition.toUpperCase();
-  lightingBadge.style.color = photo.lighting_condition === "standard" ? "var(--accent-cyan)" : "var(--accent-yellow)";
+  lightingBadge.textContent = photo.lighting_condition.toUpperCase() + " LIGHTING";
+  lightingBadge.style.color = photo.lighting_condition === "standard" ? "#0369a1" : "#b45309";
+  lightingBadge.style.background = photo.lighting_condition === "standard" ? "#e0f2fe" : "#fef3c7";
 
   // Automatically execute verification
   triggerVerification();
@@ -307,11 +346,9 @@ async function triggerVerification() {
     lastVerificationResult = data;
     renderVerificationResults(data);
   } catch (err) {
-    console.warn("Backend API not reachable directly, using local verification synthesis engine", err);
-    // Local fallback for offline execution
-    renderFallbackVerification();
+    console.error("API verification error", err);
   } finally {
-    btn.innerHTML = `<i data-lucide="play"></i> Verify Pack`;
+    btn.innerHTML = `<i data-lucide="refresh-cw"></i> Re-Verify Pack`;
     if (window.lucide) lucide.createIcons();
   }
 }
@@ -336,7 +373,7 @@ function renderVerificationResults(data) {
   } else if (isUncertain) {
     banner.classList.add("banner-uncertain");
     icon.innerHTML = `<i data-lucide="alert-triangle"></i>`;
-    title.textContent = "STOP & FIX — UNCERTAIN PHOTO";
+    title.textContent = "STOP & FIX (ACTION: RE-PHOTOGRAPH / QA)";
     reason.textContent = data.summary || "Degraded lighting or visual occlusion detected. Re-photograph or manual QA check required.";
   } else {
     banner.classList.add("banner-stop");
@@ -353,11 +390,26 @@ function renderVerificationResults(data) {
     data.detected_items.forEach(d => {
       const card = document.createElement("div");
       card.className = "visual-item-card";
-      if (d.is_ambiguous) card.classList.add("ambiguous");
-      else if (!currentScenarioData.order.line_items.some(li => li.sku === d.matched_sku)) card.classList.add("wrong-item");
+      let iconName = "package";
+      const lbl = d.detected_label.toLowerCase();
+      if (lbl.includes("shirt") || lbl.includes("tee")) iconName = "shirt";
+      else if (lbl.includes("mug") || lbl.includes("cup")) iconName = "coffee";
+      else if (lbl.includes("cable")) iconName = "cable";
+      else if (lbl.includes("flask") || lbl.includes("bottle")) iconName = "cylinder";
+      else if (lbl.includes("pen")) iconName = "pen-tool";
+      else if (lbl.includes("journal") || lbl.includes("notebook")) iconName = "book";
+      else if (lbl.includes("tape")) iconName = "disc";
+
+      if (d.is_ambiguous) {
+        card.classList.add("ambiguous");
+        iconName = "alert-triangle";
+      } else if (!currentScenarioData.order.line_items.some(li => li.sku === d.matched_sku)) {
+        card.classList.add("wrong-item");
+        iconName = "alert-octagon";
+      }
 
       card.innerHTML = `
-        <div class="visual-item-icon"><i data-lucide="box"></i></div>
+        <div class="visual-item-icon"><i data-lucide="${iconName}"></i></div>
         <div class="visual-item-title">${d.detected_label}</div>
         <div class="visual-item-conf">${(d.confidence * 100).toFixed(0)}% CONF</div>
       `;
@@ -379,11 +431,11 @@ function renderVerificationResults(data) {
     return `
       <tr>
         <td><span class="badge-subtle">${r.sku}</span></td>
-        <td>${r.product_name}</td>
+        <td><strong>${r.product_name}</strong></td>
         <td><strong>${r.expected_qty}</strong></td>
         <td><strong>${r.observed_qty}</strong></td>
         <td><span class="status-pill ${pillClass}">${r.status}</span></td>
-        <td style="font-family: 'JetBrains Mono'">${(r.confidence * 100).toFixed(0)}%</td>
+        <td style="font-family: 'JetBrains Mono'; font-weight: 700;">${(r.confidence * 100).toFixed(0)}%</td>
       </tr>
     `;
   }).join("");
@@ -410,7 +462,7 @@ function renderVerificationResults(data) {
     `;
   }).join("");
 
-  document.getElementById("totalLatencyBadge").textContent = `Latency: ${totalLatency.toFixed(2)} ms`;
+  document.getElementById("totalLatencyBadge").textContent = `Pipeline Latency: ${totalLatency.toFixed(2)} ms`;
 
   // 5. Render Evidence Contract Tab
   document.getElementById("auditContentHash").textContent = data.evidence_record.content_hash;

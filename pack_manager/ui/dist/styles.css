@@ -185,6 +185,129 @@ body.light-theme {
   font-weight: 700;
 }
 
+/* Quick How-it-Works Strip */
+.how-it-works-strip {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  background: #f8fafc;
+  padding: 0.5rem 1.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 0.78rem;
+  color: #475569;
+}
+
+.guide-step {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.step-num {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #2563eb;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.guide-arrow {
+  color: #94a3b8;
+  font-weight: 800;
+}
+
+.step-badge {
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+}
+
+/* Scenario Explainer Card */
+.scenario-explainer {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 0.75rem 1.5rem 0 1.5rem;
+  background: #ffffff;
+  border: 1px solid #bfdbfe;
+  border-left: 4px solid #2563eb;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.explainer-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.explainer-content {
+  flex: 1;
+}
+
+.explainer-title {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #1e3a8a;
+}
+
+.explainer-text {
+  font-size: 0.78rem;
+  color: #475569;
+  margin-top: 2px;
+  line-height: 1.35;
+}
+
+.explainer-target {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #334155;
+  white-space: nowrap;
+}
+
+.badge-target-seal {
+  background: #dcfce7;
+  color: #15803d;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid #86efac;
+}
+
+.badge-target-stop {
+  background: #fee2e2;
+  color: #b91c1c;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid #fca5a5;
+}
+
+.badge-target-uncertain {
+  background: #fef3c7;
+  color: #b45309;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid #fcd34d;
+}
+
 /* Preset Scenario Selector Bar */
 .scenario-bar {
   display: flex;
