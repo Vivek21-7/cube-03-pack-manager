@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pack Manager — Outbound Pack Verification Agent (Track 03)</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body class="light-theme">
+  <!-- App Shell -->
+  <div class="app-container">
+    
+    <!-- Top Navigation Header -->
+    <header class="top-nav">
+      <div class="nav-brand">
+        <div class="brand-icon">
+          <i data-lucide="package-check"></i>
+        </div>
+        <div>
+          <div class="brand-title">PACK MANAGER <span class="badge-track">Track 03</span></div>
+          <div class="brand-sub">Autonomous Outbound Verification Agent &bull; CUBE Buildathon</div>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="nav-tabs">
+        <button class="nav-tab active" id="tabBtnStation" onclick="switchTab('station')">
+          <i data-lucide="scan-line"></i> Pack Station Live
+        </button>
+        <button class="nav-tab" id="tabBtnAudit" onclick="switchTab('audit')">
+          <i data-lucide="shield-check"></i> Evidence Contract & Audit
+        </button>
+        <button class="nav-tab" id="tabBtnEval" onclick="switchTab('eval')">
+          <i data-lucide="bar-chart-3"></i> Benchmark & Eval Report
+        </button>
+      </div>
+
+      <!-- Station Info -->
+      <div class="station-meta">
+        <div class="pulse-indicator"></div>
+        <div class="station-id">STATION-BAY-04</div>
+        <div class="agent-tag">v1.0.0 &bull; LIVE</div>
+      </div>
+    </header>
+
+    <!-- Preset Scenario Selector Bar -->
+    <section class="scenario-bar">
+      <div class="scenario-label">
+        <i data-lucide="layers"></i> <span>1-Click Test Scenarios:</span>
+      </div>
+      <div class="scenario-buttons" id="scenarioBtnList">
+        <!-- Dynamically populated or static fallbacks -->
+        <button class="btn-preset active" onclick="loadScenario('CORRECT_ORDER')">
+          <span class="dot-status green"></span> 1. Correct Order
+        </button>
+        <button class="btn-preset" onclick="loadScenario('MISSING_ITEM')">
+          <span class="dot-status red"></span> 2. Missing Item
+        </button>
+        <button class="btn-preset" onclick="loadScenario('WRONG_ITEM')">
+          <span class="dot-status red"></span> 3. Wrong Item Variant
+        </button>
+        <button class="btn-preset" onclick="loadScenario('EXTRA_ITEM')">
+          <span class="dot-status red"></span> 4. Extra Unordered
+        </button>
+        <button class="btn-preset" onclick="loadScenario('WRONG_QUANTITY')">
+          <span class="dot-status red"></span> 5. Wrong Qty
+        </button>
+        <button class="btn-preset" onclick="loadScenario('MULTI_IDENTICAL')">
+          <span class="dot-status green"></span> 6. Multi-Identical
+        </button>
+        <button class="btn-preset" onclick="loadScenario('VISUALLY_SIMILAR')">
+          <span class="dot-status red"></span> 7. Visually Similar
+        </button>
+        <button class="btn-preset" onclick="loadScenario('AMBIGUOUS_CAPTURE')">
+          <span class="dot-status yellow"></span> 8. Ambiguous Photo
+        </button>
+      </div>
+      <button class="btn-primary" onclick="triggerVerification()" id="btnRunVerify">
+        <i data-lucide="play"></i> Verify Pack
+      </button>
+    </section>
+
+    <!-- TAB 1: Live Pack Station View -->
+    <main class="tab-content active" id="tabStation">
+      <div class="grid-main">
+        
+        <!-- Left Column: Order Manifest & Visual Evidence Camera -->
+        <div class="panel col-manifest">
+          <div class="panel-header">
+            <div class="panel-title"><i data-lucide="file-text"></i> Order Manifest & Line Items</div>
+            <span class="badge-subtle" id="manifestOrderId">ORD-2026-001</span>
+          </div>
+
+          <div class="manifest-meta-grid">
+            <div class="meta-item">
+              <span class="meta-lbl">Package ID</span>
+              <span class="meta-val" id="manifestPkgId">PKG-BOX-101</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-lbl">Merchant / Client</span>
+              <span class="meta-val" id="manifestClientId">MERCHANT-APEX</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-lbl">Fulfillment Org</span>
+              <span class="meta-val" id="manifestOrgId">3PL-LOGISTICS-HUB</span>
+            </div>
+          </div>
+
+          <div class="section-subtitle">Expected Items</div>
+          <div class="table-container">
+            <table class="data-table" id="expectedItemsTable">
+              <thead>
+                <tr>
+                  <th>SKU</th>
+                  <th>Product Name</th>
+                  <th>Qty</th>
+                </tr>
+              </thead>
+              <tbody id="expectedItemsBody">
+                <!-- Dynamically loaded -->
+              </tbody>
+            </table>
+          </div>
+
+          <div class="section-subtitle" style="margin-top: 1.25rem;">
+            <span>Package Camera Feed</span>
+            <span class="badge-lighting" id="cameraLightingBadge">Standard Lighting</span>
+          </div>
+
+          <!-- Simulated Live Camera Canvas / Box View -->
+          <div class="camera-viewport">
+            <div class="camera-reticle"></div>
+            <div class="camera-overlay-tag">CAM 01 &bull; 1080p TOP-DOWN</div>
+            <div class="box-interior" id="boxInteriorCanvas">
+              <!-- Visualized Physical Item Cards with Bounding Boxes -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Middle Column: Agent Verification & Decision Engine -->
+        <div class="panel col-verdict">
+          
+          <!-- Big Operational Decision Action Banner -->
+          <div class="decision-banner banner-seal" id="decisionBanner">
+            <div class="decision-icon" id="decisionIcon">
+              <i data-lucide="shield-check"></i>
+            </div>
+            <div class="decision-text-block">
+              <div class="decision-lead">OPERATIONAL DECISION</div>
+              <div class="decision-title" id="decisionTitle">SEAL PACKAGE</div>
+              <div class="decision-reason" id="decisionReason">
+                All 7 verification checks passed with grounded evidence. Order is 100% verified.
+              </div>
+            </div>
+            <div class="decision-meta">
+              <div class="decided-by">AGENT: pack-manager</div>
+              <div class="decided-time" id="decisionTime">2026-09-26 18:45:00 UTC</div>
+            </div>
+          </div>
+
+          <!-- Quantity Comparison Table -->
+          <div class="panel-header" style="margin-top: 1rem;">
+            <div class="panel-title"><i data-lucide="table-2"></i> Expected vs. Observed Quantity Table</div>
+          </div>
+          <div class="table-container">
+            <table class="data-table" id="quantityComparisonTable">
+              <thead>
+                <tr>
+                  <th>SKU</th>
+                  <th>Product Description</th>
+                  <th>Expected</th>
+                  <th>Observed</th>
+                  <th>Status</th>
+                  <th>Confidence</th>
+                </tr>
+              </thead>
+              <tbody id="quantityComparisonBody">
+                <!-- Populated via agent response -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- 7 Discrete Checks Traceability Grid -->
+          <div class="panel-header" style="margin-top: 1.25rem;">
+            <div class="panel-title"><i data-lucide="list-checks"></i> 7-Check Traceable Verification Stepper</div>
+            <span class="badge-subtle" id="totalLatencyBadge">Latency: 0.12 ms</span>
+          </div>
+
+          <div class="checks-grid" id="checksGrid">
+            <!-- 7 Check Cards populated dynamically -->
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- TAB 2: Evidence Contract & Audit Trail -->
+    <main class="tab-content" id="tabAudit">
+      <div class="grid-audit">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title"><i data-lucide="file-code-2"></i> Immutable Evidence Contract (Schema v1.0.0)</div>
+            <button class="btn-secondary" onclick="copyEvidenceHash()">
+              <i data-lucide="copy"></i> Copy SHA-256 Hash
+            </button>
+          </div>
+
+          <div class="hash-banner">
+            <span class="hash-label">SHA-256 CONTENT HASH:</span>
+            <span class="hash-value" id="auditContentHash">9cd55c9c262d11fd9497ba5e541b7402df233c7043a646b19a31cb9416dc8f09</span>
+          </div>
+
+          <pre class="json-viewer" id="evidenceJsonViewer">Loading Evidence Record...</pre>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title"><i data-lucide="user-cog"></i> Supervisor Manual Override</div>
+          </div>
+
+          <div class="override-form">
+            <p class="text-muted">
+              According to the Evidence Contract, human overrides must be permanently appended with mandatory justification and authorized supervisor credentials.
+            </p>
+
+            <div class="form-group">
+              <label>Override Action</label>
+              <select id="overrideDecisionSelect" class="form-control">
+                <option value="STOP_AND_FIX">STOP & FIX (Halt Sealing)</option>
+                <option value="SEAL">SEAL (Authorize Sealing)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Justification / Reason (Mandatory)</label>
+              <textarea id="overrideReasonInput" class="form-control" rows="3" placeholder="e.g. Physical supervisor inspection confirmed visual occlusion was barcode paper slip only."></textarea>
+            </div>
+
+            <div class="form-group">
+              <label>Authorized Supervisor ID</label>
+              <input type="text" id="overrideSupervisorInput" class="form-control" value="QA_SUPERVISOR_07" />
+            </div>
+
+            <button class="btn-primary btn-full" onclick="submitOverride()">
+              <i data-lucide="stamp"></i> Commit Authorized Override
+            </button>
+          </div>
+
+          <div class="section-subtitle" style="margin-top: 1.5rem;">Override Audit Trail</div>
+          <div id="overrideHistoryList" class="override-history">
+            <div class="empty-override">No manual overrides recorded for this pack.</div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- TAB 3: Benchmark & Evaluation Report -->
+    <main class="tab-content" id="tabEval">
+      <div class="eval-dashboard">
+        
+        <!-- Summary Scorecards -->
+        <div class="scorecard-row">
+          <div class="scorecard">
+            <div class="scorecard-title">Inter-Human Agreement</div>
+            <div class="scorecard-value accent-cyan" id="evalKappa">1.00 &kappa;</div>
+            <div class="scorecard-note">Cohen's Kappa (Substantial)</div>
+          </div>
+          <div class="scorecard">
+            <div class="scorecard-title">Overall Accuracy</div>
+            <div class="scorecard-value accent-green" id="evalAccuracy">100.0%</div>
+            <div class="scorecard-note">60 Unseen Held-out Units</div>
+          </div>
+          <div class="scorecard">
+            <div class="scorecard-title">Critical Misses (FN)</div>
+            <div class="scorecard-value accent-green" id="evalFN">0</div>
+            <div class="scorecard-note">0% Dangerous Escapes</div>
+          </div>
+          <div class="scorecard">
+            <div class="scorecard-title">Uncertainty Catch Rate</div>
+            <div class="scorecard-value accent-yellow" id="evalUncertain">6.67%</div>
+            <div class="scorecard-note">4 Degraded Images Caught</div>
+          </div>
+          <div class="scorecard">
+            <div class="scorecard-title">Mean Latency</div>
+            <div class="scorecard-value accent-purple" id="evalLatency">0.11 ms</div>
+            <div class="scorecard-note">P95: 0.15 ms</div>
+          </div>
+        </div>
+
+        <!-- Evaluation Scenario Table & Confusion Matrix Grid -->
+        <div class="grid-main" style="margin-top: 1.5rem;">
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title"><i data-lucide="layers"></i> Performance by Test Scenario Category</div>
+            </div>
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Scenario Category</th>
+                    <th>Units</th>
+                    <th>Accuracy</th>
+                    <th>Uncertain</th>
+                    <th>Target Action</th>
+                  </tr>
+                </thead>
+                <tbody id="evalScenarioBody">
+                  <!-- Loaded dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title"><i data-lucide="cpu"></i> Per-Check Verification Reliability</div>
+            </div>
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Check Module</th>
+                    <th>PASS</th>
+                    <th>FAIL</th>
+                    <th>UNCERTAIN</th>
+                    <th>Avg Latency</th>
+                  </tr>
+                </thead>
+                <tbody id="evalChecksBody">
+                  <!-- Loaded dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
