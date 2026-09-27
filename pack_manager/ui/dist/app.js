@@ -757,7 +757,7 @@ function renderVerificationResults(data) {
   if (boxCanvas) {
     boxCanvas.innerHTML = "";
     if (data.detected_items && data.detected_items.length > 0) {
-      data.detected_items.forEach(d => {
+      data.detected_items.forEach((d, idx) => {
         const card = document.createElement("div");
         card.className = "visual-item-card";
         let iconName = "package";
@@ -779,6 +779,7 @@ function renderVerificationResults(data) {
         }
 
         card.innerHTML = `
+          <div class="visual-item-remove-btn" onclick="removeItemByIndex(${idx})" title="Remove this item from box">&times;</div>
           <div class="visual-item-icon"><i data-lucide="${iconName}"></i></div>
           <div class="visual-item-title">${d.detected_label}</div>
           <div class="visual-item-conf">${(d.confidence * 100).toFixed(0)}% CONF</div>
@@ -786,7 +787,7 @@ function renderVerificationResults(data) {
         boxCanvas.appendChild(card);
       });
     } else {
-      boxCanvas.innerHTML = `<div class="empty-override">0 visual items detected in parcel.</div>`;
+      boxCanvas.innerHTML = `<div class="empty-override">0 visual items in parcel. Click "+ Add Item" below to put items in!</div>`;
     }
   }
 
@@ -1008,4 +1009,88 @@ async function fetchEvalSummary() {
       `;
     }).join("");
   }
+}
+
+// Interactive Box Sandbox Item Manipulation
+function addItemToBox() {
+  if (!currentScenarioData || !currentScenarioData.photos || !currentScenarioData.photos[0]) return;
+
+  const selectEl = document.getElementById("selectItemToAdd");
+  const selectedOpt = selectEl.options[selectEl.selectedIndex];
+  const sku = selectedOpt.value;
+  const label = selectedOpt.getAttribute("data-label");
+  const icon = selectedOpt.getAttribute("data-icon") || "package";
+
+  const photo = currentScenarioData.photos[0];
+  photo.metadata = photo.metadata || {};
+  photo.metadata.simulated_detections = photo.metadata.simulated_detections || [];
+
+  photo.metadata.simulated_detections.push({
+    detected_label: label,
+    matched_sku: sku,
+    confidence: 0.97,
+    icon: icon
+  });
+
+  // Remove preset active highlights since it's now a custom pack
+  document.querySelectorAll(".btn-preset").forEach(b => b.classList.remove("active"));
+  document.getElementById("explainerTitle").textContent = "Live Sandbox Custom Pack";
+  document.getElementById("explainerText").textContent = `Manually added: ${label}. The AI agent is re-evaluating all 7 checks dynamically.`;
+  document.getElementById("explainerTarget").innerHTML = `Mode: <span class="badge-target-seal" style="background:#e0f2fe; color:#0369a1; border-color:#7dd3fc;">CUSTOM PACK</span>`;
+
+  triggerVerification();
+  showToast(`➕ Added <strong>${label}</strong> to box`, "seal");
+}
+
+function removeLastItemFromBox() {
+  if (!currentScenarioData || !currentScenarioData.photos || !currentScenarioData.photos[0]) return;
+
+  const photo = currentScenarioData.photos[0];
+  if (!photo.metadata || !photo.metadata.simulated_detections || photo.metadata.simulated_detections.length === 0) {
+    showToast("⚠️ Box is already empty!", "stop");
+    return;
+  }
+
+  const removed = photo.metadata.simulated_detections.pop();
+  document.querySelectorAll(".btn-preset").forEach(b => b.classList.remove("active"));
+  document.getElementById("explainerTitle").textContent = "Live Sandbox Custom Pack";
+  document.getElementById("explainerText").textContent = `Manually removed: ${removed.detected_label}. The AI agent is re-evaluating all 7 checks dynamically.`;
+
+  triggerVerification();
+  showToast(`➖ Removed <strong>${removed.detected_label}</strong> from box`, "info");
+}
+
+function removeItemByIndex(idx) {
+  if (!currentScenarioData || !currentScenarioData.photos || !currentScenarioData.photos[0]) return;
+
+  const photo = currentScenarioData.photos[0];
+  if (photo.metadata && photo.metadata.simulated_detections && photo.metadata.simulated_detections[idx]) {
+    const removed = photo.metadata.simulated_detections.splice(idx, 1)[0];
+    document.querySelectorAll(".btn-preset").forEach(b => b.classList.remove("active"));
+    document.getElementById("explainerTitle").textContent = "Live Sandbox Custom Pack";
+    document.getElementById("explainerText").textContent = `Manually removed: ${removed.detected_label}. The AI agent is re-evaluating all 7 checks dynamically.`;
+
+    triggerVerification();
+    showToast(`➖ Removed <strong>${removed.detected_label}</strong> from box`, "info");
+  }
+}
+
+function toggleLightingCondition() {
+  if (!currentScenarioData || !currentScenarioData.photos || !currentScenarioData.photos[0]) return;
+
+  const photo = currentScenarioData.photos[0];
+  const isBlur = photo.lighting_condition === "blur";
+  photo.lighting_condition = isBlur ? "standard" : "blur";
+  photo.metadata = photo.metadata || {};
+  photo.metadata.camera_quality_alert = isBlur ? null : "blur";
+
+  const lightingBadge = document.getElementById("cameraLightingBadge");
+  if (lightingBadge) {
+    lightingBadge.textContent = photo.lighting_condition.toUpperCase() + " LIGHTING";
+    lightingBadge.style.color = photo.lighting_condition === "standard" ? "#0369a1" : "#b45309";
+    lightingBadge.style.background = photo.lighting_condition === "standard" ? "#e0f2fe" : "#fef3c7";
+  }
+
+  triggerVerification();
+  showToast(`💡 Camera lighting toggled to <strong>${photo.lighting_condition.toUpperCase()}</strong>`, photo.lighting_condition === "standard" ? "seal" : "uncertain");
 }

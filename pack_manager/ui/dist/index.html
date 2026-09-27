@@ -165,6 +165,34 @@
               <!-- Visualized Physical Item Cards with Bounding Boxes -->
             </div>
           </div>
+
+          <!-- Interactive Item Selector & Box Sandbox -->
+          <div class="box-customizer">
+            <div class="customizer-header">
+              <span class="customizer-title"><i data-lucide="package-plus"></i> Interactive Item Selector & Box Sandbox</span>
+              <span class="customizer-tip">Add / remove items to test AI reaction</span>
+            </div>
+            <div class="customizer-controls">
+              <select id="selectItemToAdd" class="item-select-dropdown">
+                <option value="SKU-TEE-BLK-M" data-label="Classic Crewneck T-Shirt - Black (M)" data-icon="shirt">👕 Black T-Shirt (SKU-TEE-BLK-M)</option>
+                <option value="SKU-TEE-NVY-M" data-label="Classic Crewneck T-Shirt - Navy Blue (M)" data-icon="shirt">👕 Navy Blue T-Shirt [Wrong Variant] (SKU-TEE-NVY-M)</option>
+                <option value="SKU-MUG-CER-WHT" data-label="Ceramic Coffee Mug - Minimalist White" data-icon="coffee">☕ Ceramic Coffee Mug (SKU-MUG-CER-WHT)</option>
+                <option value="SKU-BOTTLE-THERM" data-label="Vacuum Thermal Flask 750ml" data-icon="cylinder">🍼 Thermal Flask (SKU-BOTTLE-THERM)</option>
+                <option value="SKU-PEN-GEL-BLK" data-label="Precision Gel Pen 0.5mm" data-icon="pen-tool">🖊️ Gel Pen (SKU-PEN-GEL-BLK)</option>
+                <option value="SKU-NOTE-A5-DOT" data-label="Dotted Grid Journal - Emerald" data-icon="book">📔 Grid Journal (SKU-NOTE-A5-DOT)</option>
+                <option value="SKU-PACK-TAPE-ROLL" data-label="Warehouse Packing Tape 50m" data-icon="disc">📦 Packing Tape [Foreign Object]</option>
+              </select>
+              <button class="btn-customizer-add" onclick="addItemToBox()" id="btnAddItemToBox" title="Put this item into the box">
+                <i data-lucide="plus"></i> Add Item
+              </button>
+              <button class="btn-customizer-remove" onclick="removeLastItemFromBox()" title="Remove last item from the box">
+                <i data-lucide="minus"></i> Remove
+              </button>
+              <button class="btn-customizer-lighting" onclick="toggleLightingCondition()" title="Toggle standard vs blurry camera lighting">
+                <i data-lucide="sun"></i> Lighting
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- Middle Column: Agent Verification & Decision Engine -->
