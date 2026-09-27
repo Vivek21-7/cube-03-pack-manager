@@ -94,8 +94,8 @@ def test_minimal_working_example_correct_order():
     assert result.evidence_record.subject["package_id"] == "PKG-BOX-401"
     assert result.evidence_record.operator_label == "station-bay-03"
 
-    # All 7 checks must be PASS
-    assert len(result.evidence_record.checks) == 7
+    # All discrete checks must be PASS
+    assert len(result.evidence_record.checks) == 8
     for check in result.evidence_record.checks:
         assert check.verdict == CheckVerdict.PASS
         assert check.confidence >= 0.70

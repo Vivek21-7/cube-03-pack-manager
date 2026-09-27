@@ -28,6 +28,7 @@ from pack_manager.checks import (
     WrongItemDetectionCheck,
     MissingItemDetectionCheck,
     ExtraItemDetectionCheck,
+    AnomalyOutlierDetectionCheck,
     DecisionSynthesisCheck,
 )
 from pack_manager.engine.vision_extractor import VisionExtractor
@@ -57,6 +58,7 @@ class PackVerifier:
         self.check_wrong = WrongItemDetectionCheck()
         self.check_missing = MissingItemDetectionCheck()
         self.check_extra = ExtraItemDetectionCheck()
+        self.check_anomaly = AnomalyOutlierDetectionCheck()
         self.check_synthesis = DecisionSynthesisCheck()
 
     def verify(
@@ -81,7 +83,7 @@ class PackVerifier:
             order=order, catalog=catalog, detected_items=detected_items
         )
 
-        # Step 3: Run Discrete Verification Checks 1 through 6
+        # Step 3: Run Discrete Verification Checks
         check_records: List[CheckRecord] = []
         ctx = {"discrepancies": discrepancies}
 
@@ -103,8 +105,11 @@ class PackVerifier:
         check_records.append(
             self.check_extra.run(order, catalog, photos, detected_items, discrepancies, ctx)
         )
+        check_records.append(
+            self.check_anomaly.run(order, catalog, photos, detected_items, discrepancies, ctx)
+        )
 
-        # Step 4: Run Decision Synthesis (Check 7)
+        # Step 4: Run Decision Synthesis
         synth_ctx = {"prior_checks": check_records}
         decision_record = self.check_synthesis.run(
             order, catalog, photos, detected_items, discrepancies, synth_ctx
