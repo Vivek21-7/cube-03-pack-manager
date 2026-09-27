@@ -324,19 +324,35 @@ async function triggerVerification() {
   if (!currentScenarioData) return;
 
   const btn = document.getElementById("btnRunVerify");
-  btn.innerHTML = `<i data-lucide="loader-2" class="spin"></i> Verifying...`;
+  const boxViewport = document.querySelector(".camera-viewport");
+  
+  btn.disabled = true;
+  btn.innerHTML = `<i data-lucide="loader-2" class="spin"></i> Scanning Pack...`;
   if (window.lucide) lucide.createIcons();
 
+  // Add visual laser scan line
+  let laser = boxViewport.querySelector(".laser-scanner");
+  if (!laser) {
+    laser = document.createElement("div");
+    laser.className = "laser-scanner";
+    boxViewport.appendChild(laser);
+  }
+  laser.style.display = "block";
+
   try {
-    const response = await fetch("/api/verify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        order: currentScenarioData.order,
-        photos: currentScenarioData.photos,
-        operator_label: "STATION-BAY-04"
-      })
-    });
+    // Add realistic 350ms processing delay for rich interactive feedback
+    const [response] = await Promise.all([
+      fetch("/api/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          order: currentScenarioData.order,
+          photos: currentScenarioData.photos,
+          operator_label: "STATION-BAY-04"
+        })
+      }),
+      new Promise(resolve => setTimeout(resolve, 350))
+    ]);
 
     if (!response.ok) {
       throw new Error(`HTTP Error: ${response.status}`);
@@ -345,9 +361,17 @@ async function triggerVerification() {
     const data = await response.json();
     lastVerificationResult = data;
     renderVerificationResults(data);
+
+    // Flash decision banner
+    const banner = document.getElementById("decisionBanner");
+    banner.style.transform = "scale(1.02)";
+    setTimeout(() => { banner.style.transform = "scale(1)"; }, 250);
+
   } catch (err) {
     console.error("API verification error", err);
   } finally {
+    if (laser) laser.style.display = "none";
+    btn.disabled = false;
     btn.innerHTML = `<i data-lucide="refresh-cw"></i> Re-Verify Pack`;
     if (window.lucide) lucide.createIcons();
   }
