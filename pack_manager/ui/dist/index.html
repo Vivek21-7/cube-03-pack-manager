@@ -89,6 +89,9 @@
           <span class="dot-status yellow"></span> 8. Blurry / Ambiguous
         </button>
       </div>
+      <button class="btn-catalog-builder" onclick="openOrderBuilderModal()" id="btnOpenOrderBuilderTop" title="Open full catalog to select items and quantities that customer bought">
+        <i data-lucide="shopping-cart"></i> 🛍️ Select Items & Qty
+      </button>
       <button class="btn-primary" onclick="triggerVerification()" id="btnRunVerify">
         <i data-lucide="refresh-cw"></i> Re-Verify Pack
       </button>
@@ -115,7 +118,12 @@
               <span class="step-badge">STEP 1</span>
               <i data-lucide="file-text"></i> Customer Order Manifest
             </div>
-            <span class="badge-subtle" id="manifestOrderId">ORD-2026-001</span>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <button class="btn-secondary" onclick="openOrderBuilderModal()" style="font-size: 0.72rem; padding: 3px 8px; font-weight: 700; color: #059669; border-color: #a7f3d0;" title="Customize what the customer ordered">
+                <i data-lucide="edit-3"></i> Select Items
+              </button>
+              <span class="badge-subtle" id="manifestOrderId">ORD-2026-001</span>
+            </div>
           </div>
 
           <div class="manifest-meta-grid">
@@ -408,6 +416,64 @@
 
       </div>
     </main>
+
+    <!-- Modal: Customer Order & Item Quantity Builder -->
+    <div class="modal-backdrop" id="orderBuilderModal" style="display: none;">
+      <div class="modal-card modal-lg">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <div class="modal-icon"><i data-lucide="shopping-bag"></i></div>
+            <div>
+              <div class="modal-title">Customer Order & Quantity Builder</div>
+              <div class="modal-subtitle">Select items & quantities that the customer bought, and configure what is in the physical box</div>
+            </div>
+          </div>
+          <button class="btn-modal-close" onclick="closeOrderBuilderModal()">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Quick Preset Fill Buttons -->
+          <div class="quick-preset-bar">
+            <span class="quick-lbl">Quick Presets:</span>
+            <button class="btn-quick-pill" onclick="quickFillScenario('clean_apparel')">👕 T-Shirt + Mug (Match)</button>
+            <button class="btn-quick-pill" onclick="quickFillScenario('stationery_kit')">🖊️ 3x Pens + 1x Journal</button>
+            <button class="btn-quick-pill" onclick="quickFillScenario('multi_mug')">☕ 4x Mugs (Bulk)</button>
+            <button class="btn-quick-pill" onclick="quickFillScenario('missing_item')">⚠️ 1 Item Missing</button>
+            <button class="btn-quick-pill" onclick="quickFillScenario('extra_tape')">📦 Extra Tape in Box</button>
+            <button class="btn-quick-pill reset" onclick="resetAllQuantities()">🧹 Reset to 0</button>
+          </div>
+
+          <!-- Full Product Catalog Table with Quantity Steppers -->
+          <div class="catalog-table-container">
+            <table class="catalog-table">
+              <thead>
+                <tr>
+                  <th style="width: 36%;">Product & Catalog SKU</th>
+                  <th style="width: 16%;">Category</th>
+                  <th style="width: 24%; text-align: center;">Customer Ordered Qty<br><span style="font-size:0.65rem; color:#64748b;">(Expected Manifest)</span></th>
+                  <th style="width: 24%; text-align: center;">Physically in Box<br><span style="font-size:0.65rem; color:#64748b;">(Camera Detected)</span></th>
+                </tr>
+              </thead>
+              <tbody id="catalogItemsTableBody">
+                <!-- Dynamically populated from CATALOG_ITEMS in app.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <div class="modal-summary-text" id="orderBuilderSummary">
+            Total Ordered: <strong>0 items</strong> &bull; Total Packed: <strong>0 items</strong>
+          </div>
+          <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeOrderBuilderModal()">Cancel</button>
+            <button class="btn-primary" onclick="applyCustomOrderAndVerify()" id="btnApplyCustomOrder">
+              <i data-lucide="check-circle"></i> Apply Order & Verify Pack
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Toast Notification Container -->
     <div class="toast-container" id="toastContainer"></div>

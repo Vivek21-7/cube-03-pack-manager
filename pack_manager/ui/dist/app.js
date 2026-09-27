@@ -1094,3 +1094,333 @@ function toggleLightingCondition() {
   triggerVerification();
   showToast(`💡 Camera lighting toggled to <strong>${photo.lighting_condition.toUpperCase()}</strong>`, photo.lighting_condition === "standard" ? "seal" : "uncertain");
 }
+
+// =========================================================================
+// FULL STORE CATALOG & CUSTOMER ORDER / QUANTITY BUILDER
+// =========================================================================
+
+// Complete catalog of all items that customers can buy in this fulfillment system
+const CATALOG_ITEMS = [
+  {
+    sku: "SKU-TEE-BLK-M",
+    name: "Classic Crewneck T-Shirt - Black (M)",
+    category: "Apparel",
+    icon: "shirt",
+    isNonInventory: false
+  },
+  {
+    sku: "SKU-TEE-NVY-M",
+    name: "Classic Crewneck T-Shirt - Navy Blue (M)",
+    category: "Apparel",
+    icon: "shirt",
+    isNonInventory: false
+  },
+  {
+    sku: "SKU-TEE-BLK-L",
+    name: "Classic Crewneck T-Shirt - Black (L)",
+    category: "Apparel",
+    icon: "shirt",
+    isNonInventory: false
+  },
+  {
+    sku: "SKU-MUG-CER-WHT",
+    name: "Ceramic Coffee Mug - Minimalist White (350ml)",
+    category: "Kitchen",
+    icon: "coffee",
+    isNonInventory: false
+  },
+  {
+    sku: "SKU-MUG-CER-GRY",
+    name: "Ceramic Coffee Mug - Stone Grey (350ml)",
+    category: "Kitchen",
+    icon: "coffee",
+    isNonInventory: false
+  },
+  {
+    sku: "SKU-CABLE-USB-C",
+    name: "Braided USB-C Fast Charging Cable (2m)",
+    category: "Electronics",
+    icon: "cable",
+    isNonInventory: false
+  },
+  {
+    sku: "SKU-CABLE-LIGHTN",
+    name: "Braided Lightning to USB-C Cable (2m)",
+    category: "Electronics",
+    icon: "cable",
+    isNonInventory: false
+  },
+  {
+    sku: "SKU-NOTE-A5-DOT",
+    name: "Dotted Grid Executive Journal - Emerald",
+    category: "Stationery",
+    icon: "book",
+    isNonInventory: false
+  },
+  {
+    sku: "SKU-PEN-GEL-BLK",
+    name: "Precision Gel Pen 0.5mm - Matte Black",
+    category: "Stationery",
+    icon: "pen-tool",
+    isNonInventory: false
+  },
+  {
+    sku: "SKU-BOTTLE-THERM",
+    name: "Vacuum Insulated Thermal Flask - 750ml Forest Green",
+    category: "Outdoor",
+    icon: "cylinder",
+    isNonInventory: false
+  },
+  {
+    sku: "SKU-PACK-TAPE-ROLL",
+    name: "Warehouse Packing Tape 50m (Internal Tool / Non-Inventory)",
+    category: "Warehouse Supplies",
+    icon: "disc",
+    isNonInventory: true
+  }
+];
+
+// Open the Customer Order & Item Quantity Builder Modal
+function openOrderBuilderModal() {
+  const modal = document.getElementById("orderBuilderModal");
+  if (!modal) return;
+
+  const tbody = document.getElementById("catalogItemsTableBody");
+  
+  // Current counts from active scenario
+  const currentOrderedCounts = {};
+  if (currentScenarioData && currentScenarioData.order && currentScenarioData.order.line_items) {
+    currentScenarioData.order.line_items.forEach(li => {
+      currentOrderedCounts[li.sku] = li.expected_quantity;
+    });
+  }
+
+  const currentPackedCounts = {};
+  if (currentScenarioData && currentScenarioData.photos && currentScenarioData.photos[0] && currentScenarioData.photos[0].metadata && currentScenarioData.photos[0].metadata.simulated_detections) {
+    currentScenarioData.photos[0].metadata.simulated_detections.forEach(d => {
+      if (d.matched_sku) {
+        currentPackedCounts[d.matched_sku] = (currentPackedCounts[d.matched_sku] || 0) + 1;
+      }
+    });
+  }
+
+  tbody.innerHTML = CATALOG_ITEMS.map(item => {
+    const ordQty = currentOrderedCounts[item.sku] || 0;
+    const pckQty = currentPackedCounts[item.sku] || 0;
+    const catClass = item.isNonInventory ? "category-tag warehouse" : "category-tag";
+
+    return `
+      <tr data-sku="${item.sku}">
+        <td>
+          <div class="product-cell">
+            <div class="product-icon-wrap"><i data-lucide="${item.icon}"></i></div>
+            <div class="product-name-block">
+              <span class="product-title">${item.name}</span>
+              <span class="badge-subtle" style="font-size:0.68rem;">${item.sku}</span>
+            </div>
+          </div>
+        </td>
+        <td><span class="${catClass}">${item.category}</span></td>
+        <td>
+          <div class="qty-stepper">
+            <button class="btn-step" onclick="updateItemQty('${item.sku}', 'ordered', -1)">&minus;</button>
+            <input type="number" min="0" max="99" class="qty-input" id="ord_qty_${item.sku}" value="${ordQty}" onchange="recalculateModalTotals()" />
+            <button class="btn-step" onclick="updateItemQty('${item.sku}', 'ordered', 1)">&plus;</button>
+          </div>
+        </td>
+        <td>
+          <div class="qty-stepper">
+            <button class="btn-step" onclick="updateItemQty('${item.sku}', 'packed', -1)">&minus;</button>
+            <input type="number" min="0" max="99" class="qty-input" id="pck_qty_${item.sku}" value="${pckQty}" onchange="recalculateModalTotals()" />
+            <button class="btn-step" onclick="updateItemQty('${item.sku}', 'packed', 1)">&plus;</button>
+            <button class="btn-step-match" onclick="matchItemQty('${item.sku}')" title="Pack exactly what was ordered">Match</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  modal.style.display = "flex";
+  recalculateModalTotals();
+  if (window.lucide) lucide.createIcons();
+}
+
+function closeOrderBuilderModal() {
+  const modal = document.getElementById("orderBuilderModal");
+  if (modal) modal.style.display = "none";
+}
+
+function updateItemQty(sku, type, delta) {
+  const inputId = type === "ordered" ? `ord_qty_${sku}` : `pck_qty_${sku}`;
+  const input = document.getElementById(inputId);
+  if (input) {
+    let val = parseInt(input.value, 10) || 0;
+    val = Math.max(0, val + delta);
+    input.value = val;
+    recalculateModalTotals();
+  }
+}
+
+function matchItemQty(sku) {
+  const ordInput = document.getElementById(`ord_qty_${sku}`);
+  const pckInput = document.getElementById(`pck_qty_${sku}`);
+  if (ordInput && pckInput) {
+    pckInput.value = ordInput.value;
+    recalculateModalTotals();
+  }
+}
+
+function recalculateModalTotals() {
+  let totalOrdered = 0;
+  let totalPacked = 0;
+
+  CATALOG_ITEMS.forEach(item => {
+    const ord = parseInt(document.getElementById(`ord_qty_${item.sku}`)?.value, 10) || 0;
+    const pck = parseInt(document.getElementById(`pck_qty_${item.sku}`)?.value, 10) || 0;
+    totalOrdered += ord;
+    totalPacked += pck;
+  });
+
+  const summaryEl = document.getElementById("orderBuilderSummary");
+  if (summaryEl) {
+    summaryEl.innerHTML = `Customer Ordered: <strong>${totalOrdered} item(s)</strong> &bull; Physically in Box: <strong>${totalPacked} item(s)</strong>`;
+  }
+}
+
+function quickFillScenario(presetKey) {
+  resetAllQuantities();
+
+  if (presetKey === "clean_apparel") {
+    setModalItemQty("SKU-TEE-BLK-M", 1, 1);
+    setModalItemQty("SKU-MUG-CER-WHT", 1, 1);
+  } else if (presetKey === "stationery_kit") {
+    setModalItemQty("SKU-PEN-GEL-BLK", 3, 3);
+    setModalItemQty("SKU-NOTE-A5-DOT", 1, 1);
+  } else if (presetKey === "multi_mug") {
+    setModalItemQty("SKU-MUG-CER-WHT", 4, 4);
+  } else if (presetKey === "missing_item") {
+    setModalItemQty("SKU-TEE-BLK-M", 1, 1);
+    setModalItemQty("SKU-BOTTLE-THERM", 1, 0); // Ordered 1 flask, but 0 packed
+  } else if (presetKey === "extra_tape") {
+    setModalItemQty("SKU-NOTE-A5-DOT", 1, 1);
+    setModalItemQty("SKU-PACK-TAPE-ROLL", 0, 1); // 0 ordered, 1 packed
+  }
+
+  recalculateModalTotals();
+}
+
+function setModalItemQty(sku, ordQty, pckQty) {
+  const ord = document.getElementById(`ord_qty_${sku}`);
+  const pck = document.getElementById(`pck_qty_${sku}`);
+  if (ord) ord.value = ordQty;
+  if (pck) pck.value = pckQty;
+}
+
+function resetAllQuantities() {
+  CATALOG_ITEMS.forEach(item => {
+    const ord = document.getElementById(`ord_qty_${item.sku}`);
+    const pck = document.getElementById(`pck_qty_${item.sku}`);
+    if (ord) ord.value = 0;
+    if (pck) pck.value = 0;
+  });
+  recalculateModalTotals();
+}
+
+function applyCustomOrderAndVerify() {
+  const newLineItems = [];
+  const newDetections = [];
+  let totalOrd = 0;
+  let totalPck = 0;
+
+  CATALOG_ITEMS.forEach(item => {
+    const ord = parseInt(document.getElementById(`ord_qty_${item.sku}`)?.value, 10) || 0;
+    const pck = parseInt(document.getElementById(`pck_qty_${item.sku}`)?.value, 10) || 0;
+
+    if (ord > 0) {
+      newLineItems.push({
+        line_item_id: "L" + (newLineItems.length + 1),
+        sku: item.sku,
+        product_name: item.name,
+        expected_quantity: ord
+      });
+      totalOrd += ord;
+    }
+
+    if (pck > 0) {
+      for (let i = 0; i < pck; i++) {
+        newDetections.push({
+          detected_label: item.name,
+          matched_sku: item.sku,
+          confidence: 0.96,
+          icon: item.icon
+        });
+      }
+      totalPck += pck;
+    }
+  });
+
+  if (newLineItems.length === 0 && newDetections.length === 0) {
+    showToast("⚠️ Please specify at least 1 item ordered or in box.", "stop");
+    return;
+  }
+
+  const customOrderId = "ORD-CUST-" + Math.floor(1000 + Math.random() * 9000);
+  const customPkgId = "PKG-BOX-" + Math.floor(500 + Math.random() * 500);
+
+  currentScenarioData = {
+    order: {
+      order_id: customOrderId,
+      package_id: customPkgId,
+      client_id: "MERCHANT-APEX",
+      organization_id: "3PL-HUB-01",
+      line_items: newLineItems
+    },
+    photos: [
+      {
+        photo_id: "PH-CUSTOM-TOP",
+        image_uri: "eval/photos/custom_pack.jpg",
+        camera_angle: "top_down",
+        lighting_condition: "standard",
+        metadata: {
+          simulated_detections: newDetections
+        }
+      }
+    ]
+  };
+
+  // Update Manifest UI
+  document.getElementById("manifestOrderId").textContent = customOrderId;
+  document.getElementById("manifestPkgId").textContent = customPkgId;
+
+  const expBody = document.getElementById("expectedItemsBody");
+  if (expBody) {
+    expBody.innerHTML = newLineItems.length > 0 
+      ? newLineItems.map(li => `
+        <tr>
+          <td><span class="badge-subtle">${li.sku}</span></td>
+          <td><strong>${li.product_name}</strong></td>
+          <td style="font-size: 0.9rem; font-weight: 700; color: #2563eb;">${li.expected_quantity}</td>
+        </tr>
+      `).join("")
+      : `<tr><td colspan="3" style="text-align:center; color:#94a3b8; font-style:italic;">No items on customer manifest (0 items ordered).</td></tr>`;
+  }
+
+  // Update camera lighting badge
+  const lightingBadge = document.getElementById("cameraLightingBadge");
+  if (lightingBadge) {
+    lightingBadge.textContent = "STANDARD LIGHTING";
+    lightingBadge.style.color = "#0369a1";
+    lightingBadge.style.background = "#e0f2fe";
+  }
+
+  // Update presets bar active state
+  document.querySelectorAll(".btn-preset").forEach(b => b.classList.remove("active"));
+  document.getElementById("explainerTitle").textContent = "Custom Customer Order & Pack";
+  document.getElementById("explainerText").textContent = `Custom order with ${totalOrd} expected item(s) and ${totalPck} physical box item(s). Executing real-time 7-check AI pipeline.`;
+  document.getElementById("explainerTarget").innerHTML = `Mode: <span class="badge-target-seal" style="background:#e0f2fe; color:#0369a1; border-color:#7dd3fc;">CUSTOM ORDER</span>`;
+
+  closeOrderBuilderModal();
+  triggerVerification();
+  showToast(`✨ <strong>Custom Order Applied:</strong> ${totalOrd} ordered, ${totalPck} in box`, "seal");
+}
+
