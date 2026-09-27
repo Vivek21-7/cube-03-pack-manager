@@ -201,3 +201,11 @@ if os.path.exists(ui_dir):
     @app.get("/")
     def serve_frontend_root():
         return FileResponse(os.path.join(ui_dir, "index.html"))
+
+    @app.get("/styles.css")
+    def serve_styles():
+        return FileResponse(os.path.join(ui_dir, "styles.css"))
+
+    @app.get("/app.js")
+    def serve_app_js():
+        return FileResponse(os.path.join(ui_dir, "app.js"))
