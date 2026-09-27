@@ -621,7 +621,7 @@ body.light-theme {
 /* Camera Box View */
 .camera-viewport {
   position: relative;
-  height: 230px;
+  height: 175px;
   background: #0f172a;
   border-radius: 8px;
   border: 1px solid #334155;
