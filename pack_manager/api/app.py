@@ -402,7 +402,15 @@ if os.path.exists(ui_dir):
     app.mount("/static", StaticFiles(directory=ui_dir), name="static")
 
     @app.get("/")
-    def serve_frontend_root():
+    @app.get("/overview")
+    @app.get("/queue")
+    @app.get("/station")
+    @app.get("/audit")
+    @app.get("/benchmarks")
+    @app.get("/units")
+    @app.get("/units/{unit_id}")
+    @app.get("/units/{unit_id}/capture")
+    def serve_frontend_root(unit_id: Optional[str] = None):
         return FileResponse(os.path.join(ui_dir, "index.html"))
 
     @app.get("/styles.css")

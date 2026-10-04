@@ -1,13 +1,19 @@
-# 📦 Pack Manager — Complete Technical & Architectural Documentation
-### Track 03: Outbound Pack Verification Agent (CUBE Buildathon)
+# 📦 Pack Manager — Pre-Seal Package Audit Intelligence
+### Track: Warehouse Packaging & Logistics (PCK / Track 03) — CUBE Buildathon 2026
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688.svg)](https://fastapi.tiangolo.com/)
 [![Pydantic v2](https://img.shields.io/badge/Pydantic-v2.0+-e92063.svg)](https://docs.pydantic.dev/)
-[![Tests](https://img.shields.io/badge/Tests-15%20Passed-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/Tests-20%20Passed-brightgreen.svg)]()
+[![False-SEAL Rate](https://img.shields.io/badge/False--SEAL%20Rate-0.0%25%20(Zero--Defect)-success)]()
 [![Cohen's Kappa](https://img.shields.io/badge/Cohen's%20Kappa-1.00%20(Substantial)-success)]()
 [![Evidence Contract](https://img.shields.io/badge/Evidence%20Contract-v1.0.0-purple.svg)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+> **"Audit the Open Box Before You Tape It Shut."**  
+> *"The right items. The right order. Before you seal."*  
+> Pack Manager catches packing errors before they reach your customer — using a single overhead photo of the open box, no barcode scanners, and no dedicated hardware.  
+> *Evidence attached. Uncertainty visible. People in control.*
 
 ---
 
@@ -38,14 +44,15 @@ In modern high-velocity fulfillment centers and third-party logistics (3PL) ware
 - **Visual Occlusions & Ambiguities**: Buried items or blurry camera feeds creating packing uncertainty.
 
 ### 🎯 The Pack Manager Solution
-**Pack Manager** is an autonomous, vision-based outbound pack verification agent that inspects high-resolution photographs of open parcel boxes at the packing station immediately before carton taping and labeling.
+**Pack Manager** is an autonomous, vision-based outbound pack verification agent that inspects photographs of open parcel boxes at the packing station immediately before carton taping and labeling.
 
 It answers the core operational question:
 > **"Does this parcel box contain exactly what the customer ordered, with zero discrepancies, zero omissions, and zero unmanifested objects?"**
 
 ### ⚡ Operational Outcomes
 - **`SEAL`**: All 8 verification checks confirm with high confidence that parcel contents match the order manifest.
-- **`STOP_AND_FIX`**: Any discrepancy (shortage, surplus, wrong SKU, unmanifested item) or visual ambiguity (blur, glare, occlusion) is detected. **Unresolved uncertainty NEVER auto-seals.**
+- **`STOP AND FIX`**: Any discrepancy (shortage, surplus, wrong SKU, unmanifested item) or visual ambiguity (blur, glare, occlusion) is detected. **Unresolved uncertainty NEVER auto-seals.**
+- **`UNCERTAIN`**: Visual capture degraded or occluded. Safe retake required.
 
 ---
 

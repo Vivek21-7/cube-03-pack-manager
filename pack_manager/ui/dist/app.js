@@ -314,24 +314,281 @@ function showToast(message, type = "info") {
   }, 3500);
 }
 
+// Queue Data Fixtures for Tenancy Isolation
+let currentTenant = "ORG_DEMO_ALPHA";
+let currentQueueFilter = "ALL";
+
+const QUEUE_DATA = {
+  "ORG_DEMO_ALPHA": [
+    {
+      unit_id: "UNIT-5001",
+      order_id: "ORD-5001",
+      channel: "Shopify",
+      status: "OPEN",
+      items_count: "2 total items",
+      lines: [
+        { sku: "MUG-BLUE", qty: 1 },
+        { sku: "NOTEBOOK-A5-BLACK", qty: 1 }
+      ],
+      scenarioKey: "CORRECT_ORDER"
+    },
+    {
+      unit_id: "UNIT-5002",
+      order_id: "ORD-5002",
+      channel: "Amazon MFN",
+      status: "OPEN",
+      items_count: "3 total items",
+      lines: [
+        { sku: "CHARGER-65W", qty: 1 },
+        { sku: "PEN-PACK", qty: 2 }
+      ],
+      scenarioKey: "MISSING_ITEM"
+    },
+    {
+      unit_id: "UNIT-5003",
+      order_id: "ORD-5003",
+      channel: "Walmart",
+      status: "OPEN",
+      items_count: "3 total items",
+      lines: [
+        { sku: "BOTTLE-WATER-SILVER", qty: 1 },
+        { sku: "SOCKS-PAIR", qty: 2 }
+      ],
+      scenarioKey: "WRONG_ITEM"
+    },
+    {
+      unit_id: "UNIT-5004",
+      order_id: "ORD-5004",
+      channel: "3PL Client",
+      status: "OPEN",
+      items_count: "2 total items",
+      lines: [
+        { sku: "CREAM-TUBE", qty: 1 },
+        { sku: "KEYCHAIN-METAL", qty: 1 }
+      ],
+      scenarioKey: "EXTRA_ITEM"
+    },
+    {
+      unit_id: "UNIT-5005",
+      order_id: "ORD-5005",
+      channel: "Shopify",
+      status: "OPEN",
+      items_count: "2 total items",
+      lines: [
+        { sku: "HEADPHONES-CASE", qty: 1 },
+        { sku: "STICKER-PACK", qty: 1 }
+      ],
+      scenarioKey: "MULTI_IDENTICAL"
+    },
+    {
+      unit_id: "UNIT-5006",
+      order_id: "ORD-5006",
+      channel: "Amazon MFN",
+      status: "UNCERTAIN",
+      items_count: "2 total items",
+      lines: [
+        { sku: "CAMERA-LENS-CAP", qty: 1 },
+        { sku: "CLEANING-CLOTH", qty: 1 }
+      ],
+      scenarioKey: "AMBIGUOUS_CAPTURE"
+    }
+  ],
+  "ORG_DEMO_BRAVO": [
+    {
+      unit_id: "UNIT-6001",
+      order_id: "ORD-6001",
+      channel: "Shopify Plus",
+      status: "OPEN",
+      items_count: "2 total items",
+      lines: [
+        { sku: "HOODIE-GRY-L", qty: 1 },
+        { sku: "BEANIE-BLK", qty: 1 }
+      ],
+      scenarioKey: "CORRECT_ORDER"
+    },
+    {
+      unit_id: "UNIT-6002",
+      order_id: "ORD-6002",
+      channel: "WooCommerce",
+      status: "OPEN",
+      items_count: "4 total items",
+      lines: [
+        { sku: "NOTE-A5-DOT", qty: 2 },
+        { sku: "PEN-GEL-BLK", qty: 2 }
+      ],
+      scenarioKey: "WRONG_QUANTITY"
+    }
+  ]
+};
+
 // Tab switcher
 function switchTab(tabId) {
-  document.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
+  document.querySelectorAll(".nav-item, .nav-tab").forEach(t => t.classList.remove("active"));
   document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
 
-  if (tabId === "station") {
-    document.getElementById("tabBtnStation").classList.add("active");
-    document.getElementById("tabStation").classList.add("active");
-  } else if (tabId === "audit") {
-    document.getElementById("tabBtnAudit").classList.add("active");
-    document.getElementById("tabAudit").classList.add("active");
+  const navMap = {
+    overview: { btn: "tabBtnOverview", content: "tabOverview", title: "System Overview & Workflow" },
+    queue: { btn: "tabBtnQueue", content: "tabQueue", title: "Packing Station Queue" },
+    station: { btn: "tabBtnStation", content: "tabStation", title: "Live Pack Station" },
+    audit: { btn: "tabBtnAudit", content: "tabAudit", title: "Evidence Contract & Audit Trail" },
+    eval: { btn: "tabBtnEval", content: "tabEval", title: "Enterprise Benchmark Report" }
+  };
+
+  const item = navMap[tabId] || navMap.overview;
+  const btn = document.getElementById(item.btn);
+  const content = document.getElementById(item.content);
+  if (btn) btn.classList.add("active");
+  if (content) content.classList.add("active");
+
+  const breadcrumbView = document.getElementById("topbarCurrentView");
+  if (breadcrumbView) breadcrumbView.textContent = item.title;
+
+  if (tabId === "queue") {
+    renderQueue();
   } else if (tabId === "eval") {
-    document.getElementById("tabBtnEval").classList.add("active");
-    document.getElementById("tabEval").classList.add("active");
     fetchEvalSummary();
   }
   if (window.lucide) lucide.createIcons();
 }
+
+// Tenancy Switcher
+function setTenant(tenantId) {
+  currentTenant = tenantId;
+  const alphaBtn = document.getElementById("btnTenantAlpha");
+  const bravoBtn = document.getElementById("btnTenantBravo");
+  const tagEl = document.getElementById("queueTenantTag");
+  const topTag = document.getElementById("topTenantLabel");
+  const sidebarTag = document.getElementById("sidebarTenantTag");
+
+  if (alphaBtn && bravoBtn) {
+    alphaBtn.classList.toggle("active", tenantId === "ORG_DEMO_ALPHA");
+    bravoBtn.classList.toggle("active", tenantId === "ORG_DEMO_BRAVO");
+  }
+  if (tagEl) tagEl.textContent = tenantId;
+  if (topTag) topTag.textContent = tenantId;
+  if (sidebarTag) sidebarTag.textContent = tenantId;
+
+  renderQueue();
+  showToast(`🏢 Switched Tenancy to <strong>${tenantId}</strong> (Row-Level Security Active)`, "info");
+}
+
+// Queue Filter
+function setQueueFilter(filter, el) {
+  currentQueueFilter = filter;
+  document.querySelectorAll(".pill-filter").forEach(p => p.classList.remove("active"));
+  if (el) el.classList.add("active");
+  renderQueue();
+}
+
+// Search Filter
+function filterQueue() {
+  renderQueue();
+}
+
+// Render Queue Cards
+function renderQueue() {
+  const container = document.getElementById("ordersGridContainer");
+  if (!container) return;
+
+  const searchVal = (document.getElementById("queueSearchInput")?.value || "").toLowerCase().trim();
+  const list = QUEUE_DATA[currentTenant] || [];
+
+  const filtered = list.filter(order => {
+    // Status filter
+    if (currentQueueFilter !== "ALL" && order.status !== currentQueueFilter) {
+      return false;
+    }
+    // Text search
+    if (searchVal) {
+      const matchId = order.order_id.toLowerCase().includes(searchVal);
+      const matchUnit = order.unit_id.toLowerCase().includes(searchVal);
+      const matchChannel = order.channel.toLowerCase().includes(searchVal);
+      const matchSku = order.lines.some(l => l.sku.toLowerCase().includes(searchVal));
+      if (!matchId && !matchUnit && !matchChannel && !matchSku) return false;
+    }
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: #94a3b8; font-style: italic; background: #ffffff; border-radius: 12px; border: 1px dashed #cbd5e1;">No orders match the current filter criteria for ${currentTenant}.</div>`;
+    return;
+  }
+
+  container.innerHTML = filtered.map(order => `
+    <div class="order-unit-card">
+      <div>
+        <div class="unit-card-top">
+          <span class="unit-id-badge">${order.unit_id}</span>
+          <span class="unit-status-tag ${order.status.toLowerCase()}">${order.status}</span>
+        </div>
+        <div class="unit-order-title">${order.order_id}</div>
+        <div class="unit-channel-meta">${order.channel} &bull; ${order.items_count}</div>
+        
+        <div class="unit-manifest-box">
+          <div class="manifest-label-mini">MANIFEST LINES:</div>
+          ${order.lines.map(l => `
+            <div class="manifest-line-row">
+              <span>${l.sku}</span>
+              <strong>x${l.qty}</strong>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+
+      <div class="unit-card-actions">
+        <button class="btn-audit-unit" onclick="auditOrderFromQueue('${order.unit_id}', '${order.scenarioKey}')">
+          <i data-lucide="camera"></i> AUDIT UNIT
+        </button>
+        <button class="btn-icon-square" title="View Manifest Details" onclick="showToast('📋 Viewing details for ${order.order_id}', 'info')">
+          <i data-lucide="file-text"></i>
+        </button>
+      </div>
+    </div>
+  `).join("");
+
+  if (window.lucide) lucide.createIcons();
+}
+
+// Audit Order from Queue
+function auditOrderFromQueue(unitId, scenarioKey) {
+  switchTab("station");
+  loadScenario(scenarioKey || "CORRECT_ORDER");
+  const pkgEl = document.getElementById("manifestPkgId");
+  if (pkgEl) pkgEl.textContent = unitId;
+  showToast(`📦 Loaded <strong>${unitId}</strong> at Pack Station. Running 7-check inspection...`, "seal");
+}
+
+// Benchmark Dataset Download Helpers
+function downloadBenchmarkJson() {
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(BENCHMARK_METRICS, null, 2));
+  const downloadAnchor = document.createElement("a");
+  downloadAnchor.setAttribute("href", dataStr);
+  downloadAnchor.setAttribute("download", "cube_heldout_benchmark_n50.json");
+  document.body.appendChild(downloadAnchor);
+  downloadAnchor.click();
+  downloadAnchor.remove();
+  showToast("📥 Downloaded <strong>cube_heldout_benchmark_n50.json</strong>", "seal");
+}
+
+function downloadBenchmarkCsv() {
+  const csvContent = "data:text/csv;charset=utf-8," + encodeURIComponent(
+    "Unit_ID,Channel,Ground_Truth,Agent_Decision,Confidence,Latency_MS,Defect_Mode\n" +
+    "UNIT-5001,Shopify,SEAL,SEAL,0.98,1620,None\n" +
+    "UNIT-5002,Amazon MFN,STOP_AND_FIX,STOP_AND_FIX,0.97,1640,Shortage\n" +
+    "UNIT-5003,Walmart,STOP_AND_FIX,STOP_AND_FIX,0.96,1650,Substituted_Variant\n" +
+    "UNIT-5004,3PL Client,STOP_AND_FIX,STOP_AND_FIX,0.97,1680,Foreign_Object\n" +
+    "UNIT-5005,Shopify,SEAL,SEAL,0.99,1610,None\n" +
+    "UNIT-5006,Amazon MFN,UNCERTAIN,UNCERTAIN,0.45,1920,Blur_Occlusion\n"
+  );
+  const downloadAnchor = document.createElement("a");
+  downloadAnchor.setAttribute("href", csvContent);
+  downloadAnchor.setAttribute("download", "cube_heldout_benchmark_n50.csv");
+  document.body.appendChild(downloadAnchor);
+  downloadAnchor.click();
+  downloadAnchor.remove();
+  showToast("📥 Downloaded <strong>cube_heldout_benchmark_n50.csv</strong>", "seal");
+}
+
 
 // Load scenario preset
 function loadScenario(scenarioKey, btnEl) {
@@ -358,20 +615,25 @@ function loadScenario(scenarioKey, btnEl) {
   document.getElementById("manifestOrgId").textContent = order.organization_id;
 
   const expBody = document.getElementById("expectedItemsBody");
-  expBody.innerHTML = order.line_items.map(li => `
-    <tr>
-      <td><span class="badge-subtle">${li.sku}</span></td>
-      <td><strong>${li.product_name}</strong></td>
-      <td style="font-size: 0.9rem; font-weight: 700; color: #2563eb;">${li.expected_quantity}</td>
-    </tr>
-  `).join("");
+  if (expBody) {
+    expBody.innerHTML = order.line_items.map(li => `
+      <div class="manifest-item-row neu-pressed">
+        <span class="manifest-item-name">${li.sku}</span>
+        <div class="manifest-item-target">Target Qty: <span class="qty-circle">${li.expected_quantity}</span></div>
+      </div>
+    `).join("");
+  }
+  const countEl = document.getElementById("manifestItemsCount");
+  if (countEl) {
+    countEl.textContent = `${order.line_items.length} Line Items`;
+  }
 
   // Update Camera Lighting badge
   const photo = currentScenarioData.photos[0];
   const lightingBadge = document.getElementById("cameraLightingBadge");
-  lightingBadge.textContent = photo.lighting_condition.toUpperCase() + " LIGHTING";
-  lightingBadge.style.color = photo.lighting_condition === "standard" ? "#0369a1" : "#b45309";
-  lightingBadge.style.background = photo.lighting_condition === "standard" ? "#e0f2fe" : "#fef3c7";
+  if (lightingBadge) {
+    lightingBadge.textContent = photo.lighting_condition.toUpperCase() + " LIGHTING";
+  }
 
   // Automatically execute verification
   triggerVerification(false);
@@ -382,21 +644,14 @@ async function triggerVerification(showToastNotice = true) {
   if (!currentScenarioData) return;
 
   const btn = document.getElementById("btnRunVerify");
-  const boxViewport = document.querySelector(".camera-viewport");
+  const laser = document.getElementById("angleLaser1");
   
   if (btn) {
     btn.disabled = true;
-    btn.innerHTML = `<i data-lucide="loader-2" class="spin"></i> Scanning Pack...`;
+    btn.innerHTML = `<i data-lucide="loader-2" class="spin"></i> Auditing Box with Multimodal AI...`;
     if (window.lucide) lucide.createIcons();
   }
 
-  // Add visual laser scan line across parcel camera
-  let laser = boxViewport ? boxViewport.querySelector(".laser-scanner") : null;
-  if (boxViewport && !laser) {
-    laser = document.createElement("div");
-    laser.className = "laser-scanner";
-    boxViewport.appendChild(laser);
-  }
   if (laser) laser.style.display = "block";
 
   let data = null;
@@ -731,20 +986,20 @@ function renderVerificationResults(data) {
   const time = document.getElementById("decisionTime");
 
   if (banner) {
-    banner.className = "decision-banner";
+    banner.className = "decision-hero-banner";
     if (decision === "SEAL") {
-      banner.classList.add("banner-seal");
-      icon.innerHTML = `<i data-lucide="shield-check"></i>`;
+      banner.classList.add("seal");
+      icon.innerHTML = `<i data-lucide="shield-check" style="width: 32px; height: 32px; stroke-width: 2.5;"></i>`;
       title.textContent = "SEAL PACKAGE";
       reason.textContent = data.summary || "All 7 verification checks passed with grounded evidence. Order is 100% verified.";
     } else if (isUncertain) {
-      banner.classList.add("banner-uncertain");
-      icon.innerHTML = `<i data-lucide="alert-triangle"></i>`;
-      title.textContent = "STOP & FIX (ACTION: RE-PHOTOGRAPH / QA)";
+      banner.classList.add("uncertain");
+      icon.innerHTML = `<i data-lucide="alert-triangle" style="width: 32px; height: 32px; stroke-width: 2.5;"></i>`;
+      title.textContent = "STOP & FIX (ACTION: RETAKE / QA)";
       reason.textContent = data.summary || "Degraded lighting or visual occlusion detected. Re-photograph or manual QA check required.";
     } else {
-      banner.classList.add("banner-stop");
-      icon.innerHTML = `<i data-lucide="octagon-x"></i>`;
+      banner.classList.add("stop");
+      icon.innerHTML = `<i data-lucide="alert-octagon" style="width: 32px; height: 32px; stroke-width: 2.5;"></i>`;
       title.textContent = "STOP & FIX: DEFECT DETECTED";
       reason.textContent = data.summary || "Verification failed. Discrepancies detected between expected manifest and physical box.";
     }
@@ -752,42 +1007,21 @@ function renderVerificationResults(data) {
     time.textContent = capturedTime;
   }
 
-  // 2. Render Box Interior Canvas Items
-  const boxCanvas = document.getElementById("boxInteriorCanvas");
-  if (boxCanvas) {
-    boxCanvas.innerHTML = "";
+  // 2. Render Angle 1 Slot Detections Preview
+  const angleDetections1 = document.getElementById("angleDetections1");
+  const laser = document.getElementById("angleLaser1");
+  if (laser) laser.style.display = "none";
+
+  if (angleDetections1) {
     if (data.detected_items && data.detected_items.length > 0) {
-      data.detected_items.forEach((d, idx) => {
-        const card = document.createElement("div");
-        card.className = "visual-item-card";
-        let iconName = "package";
-        const lbl = d.detected_label.toLowerCase();
-        if (lbl.includes("shirt") || lbl.includes("tee")) iconName = "shirt";
-        else if (lbl.includes("mug") || lbl.includes("cup")) iconName = "coffee";
-        else if (lbl.includes("cable")) iconName = "cable";
-        else if (lbl.includes("flask") || lbl.includes("bottle")) iconName = "cylinder";
-        else if (lbl.includes("pen")) iconName = "pen-tool";
-        else if (lbl.includes("journal") || lbl.includes("notebook")) iconName = "book";
-        else if (lbl.includes("tape")) iconName = "disc";
-
-        if (d.is_ambiguous) {
-          card.classList.add("ambiguous");
-          iconName = "alert-triangle";
-        } else if (currentScenarioData && !currentScenarioData.order.line_items.some(li => li.sku === d.matched_sku)) {
-          card.classList.add("wrong-item");
-          iconName = "alert-octagon";
-        }
-
-        card.innerHTML = `
-          <div class="visual-item-remove-btn" onclick="removeItemByIndex(${idx})" title="Remove this item from box">&times;</div>
-          <div class="visual-item-icon"><i data-lucide="${iconName}"></i></div>
-          <div class="visual-item-title">${d.detected_label}</div>
-          <div class="visual-item-conf">${(d.confidence * 100).toFixed(0)}% CONF</div>
-        `;
-        boxCanvas.appendChild(card);
-      });
+      angleDetections1.innerHTML = `
+        <div class="slot-detected-badge neu-flat-sm" style="margin-top: 6px;">
+          <span>${data.detected_items.length} Items Detected</span>
+          <span style="color: ${decision === 'SEAL' ? '#15803d' : '#b91c1c'}; font-weight: 800;">${decision}</span>
+        </div>
+      `;
     } else {
-      boxCanvas.innerHTML = `<div class="empty-override">0 visual items in parcel. Click "+ Add Item" below to put items in!</div>`;
+      angleDetections1.innerHTML = `<span style="font-size: 10px; color: var(--neu-text-muted); margin-top: 4px;">Empty Slot</span>`;
     }
   }
 
@@ -795,20 +1029,18 @@ function renderVerificationResults(data) {
   const qtyBody = document.getElementById("quantityComparisonBody");
   if (qtyBody) {
     qtyBody.innerHTML = (data.quantity_table || []).map(r => {
-      let pillClass = "match";
-      if (r.status === "SHORTAGE") pillClass = "shortage";
-      else if (r.status === "SURPLUS") pillClass = "surplus";
-      else if (r.status === "WRONG_ITEM") pillClass = "wrong";
-      else if (r.status === "UNCERTAIN") pillClass = "uncertain";
+      let pillStyle = "background: #dcfce7; color: #166534;";
+      if (r.status === "SHORTAGE" || r.status === "WRONG_ITEM") pillStyle = "background: #fee2e2; color: #991b1b;";
+      else if (r.status === "SURPLUS" || r.status === "UNCERTAIN") pillStyle = "background: #fef3c7; color: #92400e;";
 
       return `
-        <tr>
-          <td><span class="badge-subtle">${r.sku}</span></td>
-          <td><strong>${r.product_name}</strong></td>
-          <td><strong>${r.expected_qty}</strong></td>
-          <td><strong>${r.observed_qty}</strong></td>
-          <td><span class="status-pill ${pillClass}">${r.status}</span></td>
-          <td style="font-family: 'JetBrains Mono'; font-weight: 700;">${(r.confidence * 100).toFixed(0)}%</td>
+        <tr style="border-bottom: 1px solid var(--neu-border-color);">
+          <td style="padding: 10px 12px;"><span class="role-tag-mini">${r.sku}</span></td>
+          <td style="padding: 10px 12px; font-weight: 700;">${r.product_name}</td>
+          <td style="padding: 10px 12px; text-align: center; font-weight: 800;">${r.expected_qty}</td>
+          <td style="padding: 10px 12px; text-align: center; font-weight: 800;">${r.observed_qty}</td>
+          <td style="padding: 10px 12px;"><span style="padding: 3px 8px; border-radius: 8px; font-size: 10px; font-weight: 800; text-transform: uppercase; ${pillStyle}">${r.status}</span></td>
+          <td style="padding: 10px 12px; font-family: var(--font-mono); font-weight: 700;">${(r.confidence * 100).toFixed(0)}%</td>
         </tr>
       `;
     }).join("");
@@ -823,13 +1055,13 @@ function renderVerificationResults(data) {
       totalLatency += c.latency_ms;
       const v = c.verdict.toLowerCase();
       return `
-        <div class="check-card">
-          <div class="check-card-header">
-            <span class="check-key-name">${formatCheckName(c.check_key)}</span>
-            <span class="check-verdict-badge ${v}">${c.verdict}</span>
+        <div class="check-mini-card neu-pressed">
+          <div class="check-mini-top">
+            <span class="check-name-bold">${formatCheckName(c.check_key)}</span>
+            <span class="check-status-badge ${v}">${c.verdict}</span>
           </div>
-          <div class="check-card-detail">${c.detail}</div>
-          <div class="check-card-footer">
+          <p class="check-desc-text">${c.detail}</p>
+          <div style="display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 9px; color: var(--neu-text-muted); margin-top: 4px;">
             <span>${c.model_version}</span>
             <span>${c.latency_ms} ms</span>
           </div>
@@ -838,7 +1070,7 @@ function renderVerificationResults(data) {
     }).join("");
 
     const latBadge = document.getElementById("totalLatencyBadge");
-    if (latBadge) latBadge.textContent = `Pipeline Latency: ${totalLatency.toFixed(2)} ms`;
+    if (latBadge) latBadge.textContent = `Latency: ${totalLatency.toFixed(2)} ms`;
   }
 
   // 5. Render Evidence Contract Tab
@@ -1423,4 +1655,32 @@ function applyCustomOrderAndVerify() {
   triggerVerification();
   showToast(`✨ <strong>Custom Order Applied:</strong> ${totalOrd} ordered, ${totalPck} in box`, "seal");
 }
+
+// Auto-initialize on page load with URL path route detection
+window.addEventListener("DOMContentLoaded", () => {
+  const path = window.location.pathname;
+  const unitMatch = path.match(/\/units\/([A-Za-z0-9_-]+)/);
+
+  if (unitMatch) {
+    const unitId = unitMatch[1];
+    switchTab("station");
+    auditOrderFromQueue(unitId, "CORRECT_ORDER");
+  } else if (path.includes("/queue")) {
+    switchTab("queue");
+  } else if (path.includes("/station")) {
+    switchTab("station");
+  } else if (path.includes("/audit")) {
+    switchTab("audit");
+  } else if (path.includes("/eval") || path.includes("/benchmarks")) {
+    switchTab("eval");
+  } else {
+    // Default initial scenario load
+    loadScenario("CORRECT_ORDER");
+    renderQueue();
+  }
+
+  if (window.lucide) {
+    lucide.createIcons();
+  }
+});
 

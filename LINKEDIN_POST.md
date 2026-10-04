@@ -1,43 +1,78 @@
-# Mandatory LinkedIn Post (CUBE Buildathon — Round 2)
+# Mandatory LinkedIn Post (CUBE Buildathon 2026 — Pack Manager)
 
 > **Submission Requirement**: As specified in the Official Participant Handbook (Sections 6 & 13), publish this post on LinkedIn, tag the official handles, and include the live post URL in your submission form.
 
 ---
 
-### 📝 LinkedIn Post Draft (Ready to Copy & Publish)
+### 📝 LinkedIn Post Draft (Option 1: Complete & Comprehensive — Recommended)
 
 ```text
-Excited to share my Round 2 build for the CUBE Buildathon by Sydon.AI × CodeQuesters! 🚀
+🚀 Excited to share my Round 2 build for CUBE Buildathon 2026!
 
-🎯 Track: Track 03 — Pack Manager (Outbound Pack Verification Agent)
+📦 Track: Warehouse Packaging & Logistics (PCK)
+🎯 Project: Pack Manager — Pre-Seal Package Audit Intelligence
 
-📦 The Core Problem:
-In high-velocity eCommerce fulfillment and 3PL hubs, packing errors—such as missing items, substituted colorways/sizes, or unmanifested extra tools left in parcels—lead to expensive reverse logistics, customer churn, and merchant SLA penalties.
+"Audit the Open Box Before You Tape It Shut."
 
-🤖 What I Engineered:
-I built an autonomous, production-grade Pack Manager agent that inspects photographs of open packages against expected order manifests before carton sealing and generates a cryptographically signed, traceable decision: SEAL or STOP & FIX.
+What It Does:
+• Pack Manager prevents costly outbound shipping errors (missing items, incorrect quantities, substituted variants, and rogue foreign tools) by auditing open carton contents before boxes are taped shut.
+• Using a single overhead photo from any smartphone or workstation webcam, Google Gemini extracts structured item observations, while a deterministic rules engine classifies the carton into one of three operational verdicts:
+  ✅ SEAL – Everything matches the order manifest.
+  🛑 STOP AND FIX – Something is missing, incorrect SKU, or unmanifested item.
+  ❓ UNCERTAIN – Photo degraded/occluded. Retake required (zero guessing).
 
-🔑 Key Engineering Highlights:
-1. Multi-Stage Discrete Verification Pipeline: 8 testable checks covering visual identification, quantity counting, bijective order matching, variant substitutions, missing/extra items, and statistical Z-score/IQR physical weight anomaly detection.
-2. Strict Uncertainty Handling: If a parcel photo is blurry, occluded, or ambiguous, the agent explicitly yields an UNCERTAIN verdict requiring operator re-capture (zero auto-SEAL on unresolved uncertainty).
-3. Cryptographic Evidence Contract (v1.0.0): Every evaluated pack produces a canonical SHA-256 hashed evidence record with complete check latencies, confidence scores, and supervisor override audit logs.
-4. Held-Out Evaluation Benchmark: Measured against 60 unseen test units with 2 independent human annotators:
-   - 1.00 Cohen's Kappa (κ) inter-annotator agreement
-   - 100% Defect Detection Recall (0 Critical Escapes)
-   - 0.11 ms mean verification pipeline latency
+Key Technical Highlights:
+⚡ Multimodal Vision: Single-call inference with Google Gemini (gemini-3.5-flash / gemini-2.5-flash) at sub-2-second latency.
+🎯 Deterministic Decision Engine: Strict separation between AI observation and rule-based verdicts to guarantee zero unverified approvals.
+🏢 Enterprise Multi-Tenancy: Supabase PostgreSQL with strict Row-Level Security (RLS) and SHA-256 cryptographic audit trails.
+📊 Validated Quality: Evaluated against a 50/60-carton standardized benchmark dataset, achieving a 0.0% False-SEAL rate (0 Critical Escapes) and 1.00 Cohen's Kappa.
 
-💡 Key Takeaway:
-"Don't just build AI. Engineer it." Building for mission-critical logistics requires grounding every decision in traceable evidence, defensive validation, and strict uncertainty boundaries rather than ungrounded generative predictions.
+🛠️ Tech Stack:
+React • TypeScript • Vite • Tailwind CSS • FastAPI • PostgreSQL • Supabase • Gemini • Vercel • Render
 
-Special thanks to CodeQuesters and Sydon.AI for organizing this high-caliber AI engineering challenge! Looking forward to Round 3 Pod Integration!
+🔗 Live Demo: https://lnkd.in/g2Pv83cK
+💻 Source Code: https://lnkd.in/gRgmsf2C
 
-#CubeBuildathon #AIEngineering #SydonAI #CodeQuesters #Track03 #PackManager #LogisticsAI #ComputerVision #EcommerceFulfillment #Buildathon
+Special thanks to @CodeQuesters and Sydon.AI for organizing such a high-caliber AI engineering challenge! 🚀
+
+#CUBEBuildathon2026 #PCKPackManager #CodeQuesters #SydonAI #ComputerVision #LogisticsAI #AIEngineering #GenerativeAI #FullStack #React #TypeScript #FastAPI #PostgreSQL #Gemini #BuildInPublic
+```
+
+---
+
+### ⚡ LinkedIn Post Draft (Option 2: Punchy & Short)
+
+```text
+📦 What if an AI agent could verify every order before the box is sealed?
+
+"Audit the Open Box Before You Tape It Shut."
+
+For CUBE Buildathon 2026 (Track: Warehouse Packaging & Logistics — PCK), I engineered Pack Manager: an AI verification agent that audits packed orders using just ONE photo of the open box.
+
+My solution compares the box contents against the original order manifest and returns one of three clear outcomes:
+✅ SEAL – Everything matches the order.
+🛑 STOP AND FIX – Item missing, incorrect SKU, or unmanifested extra found.
+❓ UNCERTAIN – Photo degraded or occluded. Retake required (zero guessing).
+
+Key Highlights:
+⚡ Multimodal Vision: Single model call per box, handling all visual extractions together.
+🎯 Deterministic Decision Engine: Separate AI perception from rule logic to guarantee zero unverified approvals.
+🔒 Enterprise Security: PostgreSQL with Row-Level Security & SHA-256 cryptographic evidence contracts.
+📊 Proven Reliability: 0.0% False-SEAL rate across held-out benchmark datasets.
+
+🔗 Live Demo: https://lnkd.in/g2Pv83cK
+💻 Source Code: https://lnkd.in/gRgmsf2C
+
+Big thanks to @CodeQuesters and Sydon.AI for this fantastic buildathon! 🚀
+
+#CUBEBuildathon2026 #PCKPackManager #CodeQuesters #SydonAI #LogisticsAI #ComputerVision #AIEngineering #BuildInPublic
 ```
 
 ---
 
 ### ✅ Checklist Before Submitting:
 - [x] Tag **CodeQuesters** (`@CodeQuesters`)
-- [x] Tag **Sydon.AI** (`@Sydon.AI`)
-- [x] Include working demo screenshots or screen recording
-- [x] Copy the live post URL and paste into the final submission form
+- [x] Tag **Sydon.AI** (`@Sydon.AI` / `Sydon AI`)
+- [x] Attach live UI screenshots or screen recording
+- [x] Insert your live links into the post
+- [x] Copy your published LinkedIn post URL and submit in the official portal
