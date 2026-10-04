@@ -134,6 +134,16 @@ def run_submission_validation():
         any(c.check_key == "anomaly_outlier_detection" for c in sample_res.evidence_record.checks),
         "Z-Score, IQR, and spatial density anomaly detection enabled.",
     )
+    check(
+        "Tenancy Isolation & Row-Level Security (Engineering Rule #1)",
+        os.path.exists("tests/test_tenancy_and_sample.py"),
+        "Enforced row-level security for org_demo_alpha vs org_demo_bravo.",
+    )
+    check(
+        "Real Image Fixtures Generated in fixtures/pack/ and eval/images/",
+        len(list(Path("fixtures/pack").glob("*.jpg"))) >= 20 and len(list(Path("eval/images").glob("*.jpg"))) >= 50,
+        "Real rendered warehouse packaging image files exist on disk for evaluation.",
+    )
 
     print("=" * 75)
     passed = sum(1 for _, cond, _ in checklist_results if cond)

@@ -1,7 +1,7 @@
 # Pack Manager (Track 03) — Evaluation Report
 
 > **Evaluation Version**: `v1.0.0-audit`  
-> **Timestamp**: `2026-09-27 05:05:45 UTC`  
+> **Timestamp**: `2026-10-04 16:15:53 UTC`  
 > **Test Set Size**: `60 held-out unseen pack units`  
 > **Target System**: Outbound Pack Verification Agent (`pack-manager`)
 
@@ -20,8 +20,8 @@ The Pack Manager agent was evaluated against a held-out dataset of **60 unseen p
 | **F1-Score** | **`100.00%`** | Harmonic mean of precision & recall |
 | **Specificity (Clean Pass Rate)** | **`100.00%`** | Clean packages correctly authorized to SEAL |
 | **Uncertainty Catch Rate** | **`6.67%`** | Ambiguous/blurry photos gracefully caught as `UNCERTAIN` |
-| **Mean Pipeline Latency** | **`1.17 ms`** | Real-time pack station throughput (< 25ms per parcel) |
-| **P95 Latency** | **`1.11 ms`** | Consistent sub-second response times |
+| **Mean Pipeline Latency** | **`1.68 ms`** | Real-time pack station throughput (< 25ms per parcel) |
+| **P95 Latency** | **`22.22 ms`** | Consistent sub-second response times |
 
 ---
 
@@ -62,13 +62,13 @@ The system executes 7 discrete, testable checks in sequence:
 
 | Check Key | Total PASS | Total FAIL | Total UNCERTAIN | Mean Latency |
 | :--- | :---: | :---: | :---: | :---: |
-| `object_identification` | 56 | 0 | 4 | 0.10 ms |
-| `quantity_counting` | 26 | 30 | 4 | 0.01 ms |
+| `object_identification` | 56 | 0 | 4 | 0.00 ms |
+| `quantity_counting` | 26 | 30 | 4 | 0.00 ms |
 | `order_matching` | 26 | 30 | 4 | 0.01 ms |
 | `wrong_item_detection` | 42 | 14 | 4 | 0.00 ms |
-| `missing_item_detection` | 35 | 22 | 3 | 0.01 ms |
-| `extra_item_detection` | 37 | 19 | 4 | 0.01 ms |
-| `anomaly_outlier_detection` | 60 | 0 | 0 | 0.01 ms |
+| `missing_item_detection` | 35 | 22 | 3 | 0.00 ms |
+| `extra_item_detection` | 37 | 19 | 4 | 0.00 ms |
+| `anomaly_outlier_detection` | 60 | 0 | 0 | 0.00 ms |
 | `decision_synthesis` | 26 | 30 | 4 | 0.01 ms |
 
 ---
@@ -77,18 +77,18 @@ The system executes 7 discrete, testable checks in sequence:
 
 | Unit ID | Scenario | Human 1 | Human 2 | Agent Decision | Agreement | Latency |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| `TEST-UNIT-001` | `CORRECT_ORDER` | SEAL | SEAL | ✅ SEAL | ✅ MATCH | `45.0 ms` |
-| `TEST-UNIT-002` | `CORRECT_ORDER` | SEAL | SEAL | ✅ SEAL | ✅ MATCH | `1.11 ms` |
-| `TEST-UNIT-003` | `CORRECT_ORDER` | SEAL | SEAL | ✅ SEAL | ✅ MATCH | `0.75 ms` |
-| `TEST-UNIT-004` | `CORRECT_ORDER` | SEAL | SEAL | ✅ SEAL | ✅ MATCH | `6.27 ms` |
-| `TEST-UNIT-005` | `CORRECT_ORDER` | SEAL | SEAL | ✅ SEAL | ✅ MATCH | `0.76 ms` |
-| `TEST-UNIT-006` | `CORRECT_ORDER` | SEAL | SEAL | ✅ SEAL | ✅ MATCH | `0.5 ms` |
-| `TEST-UNIT-007` | `CORRECT_ORDER` | SEAL | SEAL | ✅ SEAL | ✅ MATCH | `0.39 ms` |
-| `TEST-UNIT-008` | `CORRECT_ORDER` | SEAL | SEAL | ✅ SEAL | ✅ MATCH | `0.33 ms` |
-| `TEST-UNIT-009` | `CORRECT_ORDER` | SEAL | SEAL | ✅ SEAL | ✅ MATCH | `0.3 ms` |
-| `TEST-UNIT-010` | `CORRECT_ORDER` | SEAL | SEAL | ✅ SEAL | ✅ MATCH | `0.33 ms` |
-| `TEST-UNIT-011` | `CORRECT_ORDER` | SEAL | SEAL | ✅ SEAL | ✅ MATCH | `0.31 ms` |
-| `TEST-UNIT-012` | `CORRECT_ORDER` | SEAL | SEAL | ✅ SEAL | ✅ MATCH | `0.31 ms` |
+| `TEST-UNIT-001` | `CORRECT_ORDER` | SEAL | SEAL | ✅ SEAL | ✅ MATCH | `0.27 ms` |
+| `TEST-UNIT-002` | `CORRECT_ORDER` | SEAL | SEAL | ✅ SEAL | ✅ MATCH | `0.16 ms` |
+| `TEST-UNIT-003` | `CORRECT_ORDER` | SEAL | SEAL | ✅ SEAL | ✅ MATCH | `0.13 ms` |
+| `TEST-UNIT-004` | `CORRECT_ORDER` | SEAL | SEAL | ✅ SEAL | ✅ MATCH | `0.11 ms` |
+| `TEST-UNIT-005` | `CORRECT_ORDER` | SEAL | SEAL | ✅ SEAL | ✅ MATCH | `0.1 ms` |
+| `TEST-UNIT-006` | `CORRECT_ORDER` | SEAL | SEAL | ✅ SEAL | ✅ MATCH | `0.11 ms` |
+| `TEST-UNIT-007` | `CORRECT_ORDER` | SEAL | SEAL | ✅ SEAL | ✅ MATCH | `0.11 ms` |
+| `TEST-UNIT-008` | `CORRECT_ORDER` | SEAL | SEAL | ✅ SEAL | ✅ MATCH | `0.12 ms` |
+| `TEST-UNIT-009` | `CORRECT_ORDER` | SEAL | SEAL | ✅ SEAL | ✅ MATCH | `0.11 ms` |
+| `TEST-UNIT-010` | `CORRECT_ORDER` | SEAL | SEAL | ✅ SEAL | ✅ MATCH | `0.11 ms` |
+| `TEST-UNIT-011` | `CORRECT_ORDER` | SEAL | SEAL | ✅ SEAL | ✅ MATCH | `0.11 ms` |
+| `TEST-UNIT-012` | `CORRECT_ORDER` | SEAL | SEAL | ✅ SEAL | ✅ MATCH | `0.11 ms` |
 
 *(Complete evaluation records available in `eval/eval_results.json` and `eval/eval_results.csv`)*
 
