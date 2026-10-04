@@ -59,25 +59,25 @@ const SCENARIO_EXPLAINERS = {
 const PRESET_SCENARIOS = {
   "CORRECT_ORDER": {
     order: {
-      order_id: "ORD-2026-001",
-      package_id: "PKG-BOX-101",
-      client_id: "MERCHANT-APEX",
-      organization_id: "3PL-HUB-01",
+      order_id: "ORD-5001",
+      package_id: "UNIT-5001",
+      client_id: "SHOPIFY",
+      organization_id: "ORG_DEMO_ALPHA",
       line_items: [
-        { line_item_id: "L1", sku: "SKU-TEE-BLK-M", product_name: "Classic Crewneck T-Shirt - Black (M)", expected_quantity: 1 },
-        { line_item_id: "L2", sku: "SKU-MUG-CER-WHT", product_name: "Ceramic Coffee Mug - Minimalist White", expected_quantity: 1 },
+        { line_item_id: "L1", sku: "MUG-BLUE", product_name: "Stoneware Ceramic Mug - Cobalt Blue", expected_quantity: 1 },
+        { line_item_id: "L2", sku: "NOTEBOOK-A5-BLACK", product_name: "Hardcover Ruled Notebook A5 - Jet Black", expected_quantity: 1 },
       ]
     },
     photos: [
       {
-        photo_id: "PH-001-TOP",
-        image_uri: "eval/photos/unit_001.jpg",
+        photo_id: "PH-5001-TOP",
+        image_uri: "eval/photos/unit_5001.jpg",
         camera_angle: "top_down",
         lighting_condition: "standard",
         metadata: {
           simulated_detections: [
-            { detected_label: "Classic Crewneck T-Shirt - Black (M)", matched_sku: "SKU-TEE-BLK-M", confidence: 0.98, icon: "shirt" },
-            { detected_label: "Ceramic Coffee Mug - Minimalist White", matched_sku: "SKU-MUG-CER-WHT", confidence: 0.97, icon: "coffee" },
+            { detected_label: "Stoneware Ceramic Mug - Cobalt Blue", matched_sku: "MUG-BLUE", confidence: 0.98, icon: "coffee" },
+            { detected_label: "Hardcover Ruled Notebook A5 - Jet Black", matched_sku: "NOTEBOOK-A5-BLACK", confidence: 0.97, icon: "book" },
           ]
         }
       }
@@ -423,7 +423,7 @@ const QUEUE_DATA = {
 
 // Tab switcher
 function switchTab(tabId) {
-  document.querySelectorAll(".nav-item, .nav-tab").forEach(t => t.classList.remove("active"));
+  document.querySelectorAll(".nav-item, .nav-tab, .nav-pill-btn").forEach(t => t.classList.remove("active"));
   document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
 
   const navMap = {
@@ -591,33 +591,40 @@ function downloadBenchmarkCsv() {
 
 
 // Load scenario preset
-function loadScenario(scenarioKey, btnEl) {
-  document.querySelectorAll(".btn-preset").forEach(btn => btn.classList.remove("active"));
+function loadScenario(scenarioKey, btnEl, autoRun = true) {
+  document.querySelectorAll(".scenario-chip-btn, .btn-preset").forEach(btn => btn.classList.remove("active"));
   if (btnEl) {
     btnEl.classList.add("active");
   } else {
-    const matched = document.querySelector(`.btn-preset[data-scenario="${scenarioKey}"]`);
+    const matched = document.querySelector(`.scenario-chip-btn[data-scenario="${scenarioKey}"]`);
     if (matched) matched.classList.add("active");
   }
 
   const explainer = SCENARIO_EXPLAINERS[scenarioKey] || SCENARIO_EXPLAINERS["CORRECT_ORDER"];
-  document.getElementById("explainerTitle").textContent = explainer.title;
-  document.getElementById("explainerText").textContent = explainer.text;
-  document.getElementById("explainerTarget").innerHTML = `Expected Decision: ${explainer.targetBadge}`;
+  const expTitle = document.getElementById("explainerTitle");
+  if (expTitle) expTitle.textContent = explainer.title;
+  const expText = document.getElementById("explainerText");
+  if (expText) expText.textContent = explainer.text;
+  const expTarget = document.getElementById("explainerTarget");
+  if (expTarget) expTarget.innerHTML = `Expected Decision: ${explainer.targetBadge}`;
 
   currentScenarioData = PRESET_SCENARIOS[scenarioKey] || PRESET_SCENARIOS["CORRECT_ORDER"];
 
   // Update Manifest UI
   const order = currentScenarioData.order;
-  document.getElementById("manifestOrderId").textContent = order.order_id;
-  document.getElementById("manifestPkgId").textContent = order.package_id;
-  document.getElementById("manifestClientId").textContent = order.client_id;
-  document.getElementById("manifestOrgId").textContent = order.organization_id;
+  const ordEl = document.getElementById("manifestOrderId");
+  if (ordEl) ordEl.textContent = order.order_id;
+  const pkgEl = document.getElementById("manifestPkgId");
+  if (pkgEl) pkgEl.textContent = order.package_id;
+  const cliEl = document.getElementById("manifestClientId");
+  if (cliEl) cliEl.textContent = order.client_id;
+  const orgEl = document.getElementById("manifestOrgId");
+  if (orgEl) orgEl.textContent = order.organization_id;
 
   const expBody = document.getElementById("expectedItemsBody");
   if (expBody) {
     expBody.innerHTML = order.line_items.map(li => `
-      <div class="manifest-item-row neu-pressed">
+      <div class="manifest-item-row">
         <span class="manifest-item-name">${li.sku}</span>
         <div class="manifest-item-target">Target Qty: <span class="qty-circle">${li.expected_quantity}</span></div>
       </div>
@@ -631,12 +638,23 @@ function loadScenario(scenarioKey, btnEl) {
   // Update Camera Lighting badge
   const photo = currentScenarioData.photos[0];
   const lightingBadge = document.getElementById("cameraLightingBadge");
-  if (lightingBadge) {
+  if (lightingBadge && photo) {
     lightingBadge.textContent = photo.lighting_condition.toUpperCase() + " LIGHTING";
   }
 
-  // Automatically execute verification
-  triggerVerification(false);
+  if (autoRun) {
+    triggerVerification(false);
+  } else {
+    // Initial empty slot state matching Reference 1 screenshot
+    const photoCount = document.getElementById("photoCountLabel");
+    if (photoCount) photoCount.textContent = "0";
+    const angleSub1 = document.getElementById("angleSub1");
+    if (angleSub1) angleSub1.textContent = "Empty Slot";
+    const slotDets = document.getElementById("angleDetections1");
+    if (slotDets) slotDets.innerHTML = "";
+    const resultsPanel = document.getElementById("resultsSection");
+    if (resultsPanel) resultsPanel.classList.remove("visible");
+  }
 }
 
 // Re-Verify Pack Trigger (Supports Live Server + Instant Fallback)
@@ -1674,8 +1692,8 @@ window.addEventListener("DOMContentLoaded", () => {
   } else if (path.includes("/eval") || path.includes("/benchmarks")) {
     switchTab("eval");
   } else {
-    // Default initial scenario load
-    loadScenario("CORRECT_ORDER");
+    // Default initial scenario load matching Reference 1 initial capture state
+    loadScenario("CORRECT_ORDER", null, false);
     renderQueue();
   }
 
