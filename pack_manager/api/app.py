@@ -396,6 +396,169 @@ def get_eval_summary():
     return compute_eval_metrics(records)
 
 
+tenant_queue_store: Dict[str, List[Dict[str, Any]]] = {
+    "org_demo_alpha": [
+        {
+            "unit_id": "UNIT-5001",
+            "order_id": "ORD-5001",
+            "channel": "Shopify",
+            "status": "OPEN",
+            "items_count": "2 total items",
+            "lines": [
+                {"sku": "MUG-BLUE", "qty": 1},
+                {"sku": "NOTEBOOK-A5-BLACK", "qty": 1},
+            ],
+            "scenarioKey": "CORRECT_ORDER",
+        },
+        {
+            "unit_id": "UNIT-5002",
+            "order_id": "ORD-5002",
+            "channel": "Amazon MFN",
+            "status": "OPEN",
+            "items_count": "3 total items",
+            "lines": [
+                {"sku": "CHARGER-65W", "qty": 1},
+                {"sku": "PEN-PACK", "qty": 2},
+            ],
+            "scenarioKey": "MISSING_ITEM",
+        },
+        {
+            "unit_id": "UNIT-5003",
+            "order_id": "ORD-5003",
+            "channel": "Walmart",
+            "status": "STOPPED",
+            "items_count": "3 total items",
+            "lines": [
+                {"sku": "BOTTLE-WATER-SILVER", "qty": 1},
+                {"sku": "SOCKS-PAIR", "qty": 2},
+            ],
+            "scenarioKey": "WRONG_ITEM",
+        },
+        {
+            "unit_id": "UNIT-5004",
+            "order_id": "ORD-5004",
+            "channel": "3PL Client",
+            "status": "OPEN",
+            "items_count": "2 total items",
+            "lines": [
+                {"sku": "CREAM-TUBE", "qty": 1},
+                {"sku": "KEYCHAIN-METAL", "qty": 1},
+            ],
+            "scenarioKey": "EXTRA_ITEM",
+        },
+        {
+            "unit_id": "UNIT-5005",
+            "order_id": "ORD-5005",
+            "channel": "Shopify",
+            "status": "SEALED",
+            "items_count": "2 total items",
+            "lines": [
+                {"sku": "HEADPHONES-CASE", "qty": 1},
+                {"sku": "STICKER-PACK", "qty": 1},
+            ],
+            "scenarioKey": "MULTI_IDENTICAL",
+        },
+        {
+            "unit_id": "UNIT-5006",
+            "order_id": "ORD-5006",
+            "channel": "Amazon MFN",
+            "status": "UNCERTAIN",
+            "items_count": "2 total items",
+            "lines": [
+                {"sku": "CAMERA-LENS-CAP", "qty": 1},
+                {"sku": "CLEANING-CLOTH", "qty": 1},
+            ],
+            "scenarioKey": "AMBIGUOUS_CAPTURE",
+        },
+    ],
+    "org_demo_bravo": [
+        {
+            "unit_id": "UNIT-6001",
+            "order_id": "ORD-6001",
+            "channel": "Shopify Plus",
+            "status": "OPEN",
+            "items_count": "2 total items",
+            "lines": [
+                {"sku": "HOODIE-GRY-L", "qty": 1},
+                {"sku": "BEANIE-BLK", "qty": 1},
+            ],
+            "scenarioKey": "CORRECT_ORDER",
+        },
+        {
+            "unit_id": "UNIT-6002",
+            "order_id": "ORD-6002",
+            "channel": "WooCommerce",
+            "status": "OPEN",
+            "items_count": "4 total items",
+            "lines": [
+                {"sku": "NOTE-A5-DOT", "qty": 2},
+                {"sku": "PEN-GEL-BLK", "qty": 2},
+            ],
+            "scenarioKey": "WRONG_QUANTITY",
+        },
+    ],
+}
+
+
+@app.get("/api/queue")
+def get_packing_queue(
+    tenant: Optional[str] = "org_demo_alpha",
+    x_organization_id: Optional[str] = Header(None, alias="X-Organization-Id"),
+):
+    """Returns active packing station queue respecting tenancy isolation."""
+    target_org = (x_organization_id or tenant or "org_demo_alpha").lower()
+    return tenant_queue_store.get(target_org, [])
+
+
+class QueueImportPayload(BaseModel):
+    order_id: Optional[str] = None
+    unit_id: Optional[str] = None
+    channel: Optional[str] = "Shopify"
+    tenant: Optional[str] = "org_demo_alpha"
+    raw_lines: Optional[str] = None
+    lines: Optional[List[Dict[str, Any]]] = None
+
+
+@app.post("/api/queue/import")
+def import_to_packing_queue(payload: QueueImportPayload):
+    """Imports order lines into the packing station queue (SKU:QTY;SKU:QTY format)."""
+    target_org = (payload.tenant or "org_demo_alpha").lower()
+    order_id = payload.order_id or f"ORD-{uuid.uuid4().hex[:4].upper()}"
+    unit_id = payload.unit_id or f"UNIT-{uuid.uuid4().hex[:4].upper()}"
+    parsed_lines = []
+
+    if payload.raw_lines:
+        for chunk in payload.raw_lines.split(";"):
+            chunk = chunk.strip()
+            if ":" in chunk:
+                sku, qty_str = chunk.split(":", 1)
+                try:
+                    parsed_lines.append({"sku": sku.strip(), "qty": int(qty_str.strip())})
+                except ValueError:
+                    parsed_lines.append({"sku": sku.strip(), "qty": 1})
+            elif chunk:
+                parsed_lines.append({"sku": chunk, "qty": 1})
+    elif payload.lines:
+        parsed_lines = payload.lines
+    else:
+        parsed_lines = [{"sku": "MUG-BLUE", "qty": 1}]
+
+    total_qty = sum(l.get("qty", 1) for l in parsed_lines)
+    item = {
+        "unit_id": unit_id,
+        "order_id": order_id,
+        "channel": payload.channel or "Shopify",
+        "status": "OPEN",
+        "items_count": f"{total_qty} total items",
+        "lines": parsed_lines,
+        "scenarioKey": "CORRECT_ORDER",
+    }
+    if target_org not in tenant_queue_store:
+        tenant_queue_store[target_org] = []
+    tenant_queue_store[target_org].insert(0, item)
+    return {"status": "SUCCESS", "order": item}
+
+
 # Mount static directory for frontend
 ui_dir = os.path.join(os.path.dirname(__file__), "..", "ui", "dist")
 if os.path.exists(ui_dir):
@@ -404,6 +567,7 @@ if os.path.exists(ui_dir):
     @app.get("/")
     @app.get("/overview")
     @app.get("/queue")
+    @app.get("/queue/import")
     @app.get("/station")
     @app.get("/audit")
     @app.get("/benchmarks")

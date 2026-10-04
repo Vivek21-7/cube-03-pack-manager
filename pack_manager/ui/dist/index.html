@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
 
@@ -268,50 +268,144 @@
     </section>
 
     <!-- ========================================================================= -->
-    <!-- TAB 2: PACKING STATION QUEUE -->
+    <!-- TAB 2: PACKING STATION QUEUE (Problem Statement Aligned) -->
     <!-- ========================================================================= -->
     <section class="tab-content" id="tabQueue">
       <div class="panel">
-        <div class="panel-header">
-          <div>
-            <div class="panel-title"><i data-lucide="list-ordered"></i> Packing Station Queue</div>
-            <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
-              Open orders scheduled for pre-seal audit &bull; Tenancy: <strong id="queueTenantTag">ORG_DEMO_ALPHA</strong>
+        
+        <!-- Header & Tenancy Bar -->
+        <div class="queue-header-box">
+          <div class="queue-top-row">
+            <div class="queue-title-group">
+              <h2 class="queue-main-heading">
+                <i data-lucide="list-ordered" style="width: 22px; height: 22px; color: var(--color-terracotta);"></i>
+                <span>Packing Station Queue</span>
+              </h2>
+              <span class="tenant-badge-pill" id="queueTenantTag">ORG_DEMO_ALPHA</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div class="tenancy-toggle-wrapper">
+                <button class="tenancy-switch-btn active" id="btnTenantAlpha" onclick="setTenant('ORG_DEMO_ALPHA')">Alpha Tenant</button>
+                <button class="tenancy-switch-btn" id="btnTenantBravo" onclick="setTenant('ORG_DEMO_BRAVO')">Bravo Tenant</button>
+              </div>
+              <button class="btn-primary" onclick="switchTab('overview')">
+                <i data-lucide="plus" style="width: 14px; height: 14px;"></i>
+                <span>Import Order</span>
+              </button>
             </div>
           </div>
-          <div style="display: flex; gap: 8px;">
-            <button class="btn-secondary" id="btnTenantAlpha" onclick="setTenant('ORG_DEMO_ALPHA')">Alpha</button>
-            <button class="btn-secondary" id="btnTenantBravo" onclick="setTenant('ORG_DEMO_BRAVO')">Bravo</button>
-            <button class="btn-primary" onclick="openOrderBuilderModal()">+ Import Order</button>
+          <p class="queue-subtext">
+            Active order manifest queue awaiting pre-seal audit. Select a box to photograph and evaluate.
+          </p>
+        </div>
+
+        <!-- Search & Filter Toolbar -->
+        <div class="queue-toolbar">
+          <div class="queue-search-field">
+            <i data-lucide="search"></i>
+            <input type="text" id="queueSearchInput" placeholder="Search by order ID, unit ID, channel, or SKU..." oninput="filterQueue()" />
+          </div>
+          <div class="filter-pills-cluster">
+            <button class="queue-filter-chip active" id="qfAll" onclick="setQueueFilter('ALL', this)">
+              <span>ALL</span>
+              <span class="chip-count" id="countAll">6</span>
+            </button>
+            <button class="queue-filter-chip" id="qfOpen" onclick="setQueueFilter('OPEN', this)">
+              <span>OPEN</span>
+              <span class="chip-count" id="countOpen">3</span>
+            </button>
+            <button class="queue-filter-chip" id="qfSealed" onclick="setQueueFilter('SEALED', this)">
+              <span>SEALED</span>
+              <span class="chip-count" id="countSealed">1</span>
+            </button>
+            <button class="queue-filter-chip" id="qfStopped" onclick="setQueueFilter('STOPPED', this)">
+              <span>STOPPED</span>
+              <span class="chip-count" id="countStopped">1</span>
+            </button>
+            <button class="queue-filter-chip" id="qfUncertain" onclick="setQueueFilter('UNCERTAIN', this)">
+              <span>UNCERTAIN</span>
+              <span class="chip-count" id="countUncertain">1</span>
+            </button>
           </div>
         </div>
-        <div style="margin-bottom: 16px;">
-          <input type="text" id="queueSearchInput" placeholder="Filter orders by SKU, Order ID, or Unit ID..." oninput="filterQueue()" style="width: 100%;" />
+
+        <!-- Orders Grid Container -->
+        <div class="orders-grid" id="ordersGridContainer">
+          <!-- Dynamically populated from QUEUE_DATA -->
         </div>
-        <div class="orders-grid" id="ordersGridContainer" style="display: grid; grid-template-columns: 1fr; gap: 12px;">
-          <!-- Dynamically populated -->
-        </div>
+
       </div>
     </section>
 
     <!-- ========================================================================= -->
-    <!-- TAB 3: OVERVIEW & IMPORT -->
+    <!-- TAB 3: ORDER INGESTION & IMPORT (Step 1 in Problem Statement) -->
     <!-- ========================================================================= -->
     <section class="tab-content" id="tabOverview">
-      <div class="panel" style="padding: 28px;">
-        <span class="unit-code-badge" style="color: var(--color-terracotta); margin-bottom: 12px; display: inline-block;">TRACK PCK &bull; PRE-SEAL AUDIT</span>
-        <h1 style="font-family: var(--font-heading); font-size: 28px; font-weight: 800; line-height: 1.2;">
-          Audit the Open Box <span style="color: var(--color-terracotta);">Before You Tape It Shut.</span>
-        </h1>
-        <p style="font-size: 14px; color: var(--text-secondary); margin: 12px 0 20px; line-height: 1.6;">
-          Pack Manager catches fulfillment mistakes at packing benches using an overhead photo of the open shipping carton. Fast, deterministic, and backed by a canonical SHA-256 evidence chain.
-        </p>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-          <button class="neu-btn-highlight" style="width: auto; padding: 0 24px;" onclick="switchTab('station')">
-            Open Pack Station &rarr;
+      <div class="import-card-box">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+          <div>
+            <span class="tenant-badge-pill" style="margin-bottom: 8px; display: inline-block;">STEP 1: ORDER INGESTION</span>
+            <h2 style="font-family: var(--font-heading); font-size: 22px; font-weight: 800; color: #1e293b;">Import Customer Orders</h2>
+            <p style="font-size: 13px; color: #64748b; margin-top: 4px;">
+              Paste customer order lines in standard format: <code style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-family: var(--font-mono); font-size: 11px;">SKU:QTY;SKU:QTY</code>. Each line becomes a carton unit in the active packing queue.
+            </p>
+          </div>
+          <button class="btn-secondary" onclick="switchTab('queue')">&larr; Back to Queue</button>
+        </div>
+
+        <!-- Presets Bar -->
+        <div style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Sample Order Presets:</div>
+        <div class="import-quick-presets-row">
+          <button type="button" class="import-preset-chip" onclick="applyImportPreset('MUG-BLUE:1;NOTEBOOK-A5-BLACK:1', 'Shopify')">
+            📦 Clean 2-Item (MUG + NOTEBOOK)
           </button>
-          <button class="btn-secondary" onclick="openOrderBuilderModal()">
-            Order Sandbox Builder
+          <button type="button" class="import-preset-chip" onclick="applyImportPreset('CHARGER-65W:1;PEN-PACK:2', 'Amazon MFN')">
+            ⚡ Tech Accessories (CHARGER + PENS)
+          </button>
+          <button type="button" class="import-preset-chip" onclick="applyImportPreset('HOODIE-GRY-L:1;BEANIE-BLK:1', 'Walmart')">
+            👕 Apparel Order (HOODIE + BEANIE)
+          </button>
+          <button type="button" class="import-preset-chip" onclick="applyImportPreset('BOTTLE-WATER-SILVER:1;SOCKS-PAIR:2', '3PL Client')">
+            🧦 Fitness Bundle (BOTTLE + SOCKS)
+          </button>
+        </div>
+
+        <!-- Form fields -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+          <div>
+            <label style="font-size: 11px; font-weight: 700; color: #475569; display: block; margin-bottom: 4px;">ORDER ID</label>
+            <input type="text" id="importOrderId" value="ORD-5007" style="width: 100%; font-family: var(--font-mono); font-size: 12px;" />
+          </div>
+          <div>
+            <label style="font-size: 11px; font-weight: 700; color: #475569; display: block; margin-bottom: 4px;">UNIT / CARTON ID</label>
+            <input type="text" id="importUnitId" value="UNIT-5007" style="width: 100%; font-family: var(--font-mono); font-size: 12px;" />
+          </div>
+          <div>
+            <label style="font-size: 11px; font-weight: 700; color: #475569; display: block; margin-bottom: 4px;">SALES CHANNEL</label>
+            <select id="importChannelSelect" style="width: 100%; font-size: 12px;">
+              <option value="Shopify">Shopify Direct</option>
+              <option value="Amazon MFN">Amazon MFN</option>
+              <option value="Walmart">Walmart Marketplace</option>
+              <option value="WooCommerce">WooCommerce</option>
+              <option value="3PL Client">3PL Multi-Tenant Hub</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 18px;">
+          <label style="font-size: 11px; font-weight: 700; color: #475569; display: block; margin-bottom: 4px;">ORDER MANIFEST LINES (SKU:QTY;SKU:QTY)</label>
+          <input type="text" id="importRawLines" value="MUG-BLUE:1;NOTEBOOK-A5-BLACK:1" placeholder="e.g. MUG-BLUE:1;NOTEBOOK-A5-BLACK:2;PEN-PACK:1" style="width: 100%; font-family: var(--font-mono); font-size: 13px;" />
+          <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;">Format: <code>SKU:QTY;SKU:QTY</code> (e.g. <code>MUG-BLUE:1;NOTEBOOK-A5-BLACK:2</code> adds 1 Blue Mug and 2 Notebooks).</div>
+        </div>
+
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <button class="btn-primary" onclick="submitImportOrder(false)">
+            <i data-lucide="plus-circle" style="width: 16px; height: 16px;"></i>
+            <span>Add to Packing Queue</span>
+          </button>
+          <button class="neu-btn-highlight" style="width: auto; padding: 0 20px; height: 42px; font-size: 13px;" onclick="submitImportOrder(true)">
+            <i data-lucide="camera" style="width: 16px; height: 16px;"></i>
+            <span>Import &amp; Pack Now</span>
           </button>
         </div>
       </div>
@@ -438,6 +532,6 @@
   <!-- Toast Notification Container -->
   <div class="toast-container" id="toastContainer"></div>
 
-  <script src="app.js"></script>
+  <script src="/app.js"></script>
 </body>
 </html>

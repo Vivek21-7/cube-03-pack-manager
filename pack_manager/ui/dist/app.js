@@ -460,6 +460,7 @@ function setTenant(tenantId) {
   const topTag = document.getElementById("topTenantLabel");
   const sidebarTag = document.getElementById("sidebarTenantTag");
 
+  document.querySelectorAll(".tenancy-switch-btn").forEach(b => b.classList.remove("active"));
   if (alphaBtn && bravoBtn) {
     alphaBtn.classList.toggle("active", tenantId === "ORG_DEMO_ALPHA");
     bravoBtn.classList.toggle("active", tenantId === "ORG_DEMO_BRAVO");
@@ -469,14 +470,19 @@ function setTenant(tenantId) {
   if (sidebarTag) sidebarTag.textContent = tenantId;
 
   renderQueue();
-  showToast(`🏢 Switched Tenancy to <strong>${tenantId}</strong> (Row-Level Security Active)`, "info");
+  showToast(`🏢 Active Tenancy: <strong>${tenantId}</strong> (Row-Level Security Scoped)`, "info");
 }
 
 // Queue Filter
 function setQueueFilter(filter, el) {
   currentQueueFilter = filter;
-  document.querySelectorAll(".pill-filter").forEach(p => p.classList.remove("active"));
-  if (el) el.classList.add("active");
+  document.querySelectorAll(".queue-filter-chip").forEach(p => p.classList.remove("active"));
+  if (el) {
+    el.classList.add("active");
+  } else {
+    const matched = document.getElementById("qf" + filter.charAt(0) + filter.slice(1).toLowerCase());
+    if (matched) matched.classList.add("active");
+  }
   renderQueue();
 }
 
@@ -485,20 +491,34 @@ function filterQueue() {
   renderQueue();
 }
 
-// Render Queue Cards
+// Render Queue Cards & Count Badges
 function renderQueue() {
   const container = document.getElementById("ordersGridContainer");
+  const list = QUEUE_DATA[currentTenant] || [];
+
+  // Update dynamic count badges on filter pills
+  const cAll = list.length;
+  const cOpen = list.filter(o => o.status === "OPEN").length;
+  const cSealed = list.filter(o => o.status === "SEALED").length;
+  const cStopped = list.filter(o => o.status === "STOPPED").length;
+  const cUncertain = list.filter(o => o.status === "UNCERTAIN").length;
+
+  if (document.getElementById("countAll")) document.getElementById("countAll").textContent = cAll;
+  if (document.getElementById("countOpen")) document.getElementById("countOpen").textContent = cOpen;
+  if (document.getElementById("countSealed")) document.getElementById("countSealed").textContent = cSealed;
+  if (document.getElementById("countStopped")) document.getElementById("countStopped").textContent = cStopped;
+  if (document.getElementById("countUncertain")) document.getElementById("countUncertain").textContent = cUncertain;
+
   if (!container) return;
 
   const searchVal = (document.getElementById("queueSearchInput")?.value || "").toLowerCase().trim();
-  const list = QUEUE_DATA[currentTenant] || [];
 
   const filtered = list.filter(order => {
     // Status filter
     if (currentQueueFilter !== "ALL" && order.status !== currentQueueFilter) {
       return false;
     }
-    // Text search
+    // Text search across ID, Unit, Channel, SKUs
     if (searchVal) {
       const matchId = order.order_id.toLowerCase().includes(searchVal);
       const matchUnit = order.unit_id.toLowerCase().includes(searchVal);
@@ -510,7 +530,7 @@ function renderQueue() {
   });
 
   if (filtered.length === 0) {
-    container.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: #94a3b8; font-style: italic; background: #ffffff; border-radius: 12px; border: 1px dashed #cbd5e1;">No orders match the current filter criteria for ${currentTenant}.</div>`;
+    container.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 2.5rem 1rem; color: #94a3b8; font-style: italic; background: #ffffff; border-radius: 18px; border: 1px dashed #cbd5e1;">No orders match '${currentQueueFilter}' filter for ${currentTenant}.</div>`;
     return;
   }
 
@@ -525,22 +545,23 @@ function renderQueue() {
         <div class="unit-channel-meta">${order.channel} &bull; ${order.items_count}</div>
         
         <div class="unit-manifest-box">
-          <div class="manifest-label-mini">MANIFEST LINES:</div>
+          <div class="manifest-label-mini">EXPECTED MANIFEST:</div>
           ${order.lines.map(l => `
             <div class="manifest-line-row">
               <span>${l.sku}</span>
-              <strong>x${l.qty}</strong>
+              <strong>&times;${l.qty}</strong>
             </div>
           `).join("")}
         </div>
       </div>
 
       <div class="unit-card-actions">
-        <button class="btn-audit-unit" onclick="auditOrderFromQueue('${order.unit_id}', '${order.scenarioKey}')">
-          <i data-lucide="camera"></i> AUDIT UNIT
+        <button class="btn-audit-unit" onclick="auditOrderFromQueue('${order.unit_id}', '${order.order_id}', '${order.channel}', '${order.scenarioKey || "CORRECT_ORDER"}')">
+          <i data-lucide="camera" style="width: 15px; height: 15px;"></i>
+          <span>${order.status === "OPEN" ? "Audit Unit" : "View Audit"}</span>
         </button>
-        <button class="btn-icon-square" title="View Manifest Details" onclick="showToast('📋 Viewing details for ${order.order_id}', 'info')">
-          <i data-lucide="file-text"></i>
+        <button class="btn-icon-square" title="View Manifest Details" onclick="showToast('📋 Manifest: ${order.order_id} (${order.lines.length} lines)', 'info')">
+          <i data-lucide="file-text" style="width: 16px; height: 16px;"></i>
         </button>
       </div>
     </div>
@@ -549,13 +570,138 @@ function renderQueue() {
   if (window.lucide) lucide.createIcons();
 }
 
-// Audit Order from Queue
-function auditOrderFromQueue(unitId, scenarioKey) {
+// Audit Order from Queue into Pack Station
+function auditOrderFromQueue(unitId, orderId, channel, scenarioKey) {
   switchTab("station");
-  loadScenario(scenarioKey || "CORRECT_ORDER");
-  const pkgEl = document.getElementById("manifestPkgId");
-  if (pkgEl) pkgEl.textContent = unitId;
-  showToast(`📦 Loaded <strong>${unitId}</strong> at Pack Station. Running 7-check inspection...`, "seal");
+  
+  // Find order in queue data
+  const list = QUEUE_DATA[currentTenant] || [];
+  const found = list.find(o => o.unit_id === unitId || o.order_id === orderId);
+
+  if (found) {
+    currentScenarioData = {
+      order: {
+        order_id: found.order_id,
+        package_id: found.unit_id,
+        client_id: found.channel.toUpperCase(),
+        organization_id: currentTenant,
+        line_items: found.lines.map((l, idx) => ({
+          line_item_id: "L" + (idx + 1),
+          sku: l.sku,
+          product_name: l.sku.replace(/-/g, " "),
+          expected_quantity: l.qty
+        }))
+      },
+      photos: [
+        {
+          photo_id: "PH-" + found.unit_id + "-TOP",
+          image_uri: "eval/photos/" + found.unit_id.toLowerCase() + ".jpg",
+          camera_angle: "top_down",
+          lighting_condition: "standard",
+          metadata: {
+            simulated_detections: found.lines.map((l, idx) => ({
+              detected_label: l.sku.replace(/-/g, " "),
+              matched_sku: l.sku,
+              confidence: 0.98,
+              icon: "package"
+            }))
+          }
+        }
+      ]
+    };
+
+    // Update Station UI
+    document.getElementById("manifestOrderId").textContent = found.order_id;
+    document.getElementById("manifestPkgId").textContent = found.unit_id;
+    document.getElementById("manifestClientId").textContent = found.channel.toUpperCase();
+    document.getElementById("manifestOrgId").textContent = currentTenant;
+
+    const expBody = document.getElementById("expectedItemsBody");
+    if (expBody) {
+      expBody.innerHTML = found.lines.map(l => `
+        <div class="manifest-item-row">
+          <span class="manifest-item-name">${l.sku}</span>
+          <div class="manifest-item-target">Target Qty: <span class="qty-circle">${l.qty}</span></div>
+        </div>
+      `).join("");
+    }
+    const countEl = document.getElementById("manifestItemsCount");
+    if (countEl) countEl.textContent = `${found.lines.length} Line Items`;
+
+    // Reset initial capture slot state
+    const photoCount = document.getElementById("photoCountLabel");
+    if (photoCount) photoCount.textContent = "0";
+    const angleSub1 = document.getElementById("angleSub1");
+    if (angleSub1) angleSub1.textContent = "Empty Slot";
+    const slotDets = document.getElementById("angleDetections1");
+    if (slotDets) slotDets.innerHTML = "";
+    const resultsPanel = document.getElementById("resultsSection");
+    if (resultsPanel) resultsPanel.classList.remove("visible");
+
+    showToast(`📦 Loaded <strong>${found.unit_id}</strong> (${found.order_id}) at Pack Station bench.`, "seal");
+  } else {
+    loadScenario(scenarioKey || "CORRECT_ORDER", null, false);
+  }
+}
+
+// Ingestion & Import Helpers (Problem Statement SKU:QTY;SKU:QTY Ingestion)
+function applyImportPreset(rawLines, channel) {
+  const linesInput = document.getElementById("importRawLines");
+  const channelSelect = document.getElementById("importChannelSelect");
+  if (linesInput) linesInput.value = rawLines;
+  if (channelSelect) channelSelect.value = channel;
+  showToast(`📋 Applied preset: <strong>${rawLines}</strong>`, "info");
+}
+
+function submitImportOrder(packNow = false) {
+  const orderId = (document.getElementById("importOrderId")?.value || "").trim() || ("ORD-" + Math.floor(5000 + Math.random() * 4000));
+  const unitId = (document.getElementById("importUnitId")?.value || "").trim() || ("UNIT-" + Math.floor(5000 + Math.random() * 4000));
+  const channel = document.getElementById("importChannelSelect")?.value || "Shopify";
+  const rawLines = (document.getElementById("importRawLines")?.value || "").trim() || "MUG-BLUE:1;NOTEBOOK-A5-BLACK:1";
+
+  // Parse SKU:QTY;SKU:QTY
+  const parsedLines = [];
+  rawLines.split(";").forEach(chunk => {
+    chunk = chunk.trim();
+    if (!chunk) return;
+    if (chunk.includes(":")) {
+      const [sku, qty] = chunk.split(":");
+      parsedLines.push({ sku: sku.trim(), qty: parseInt(qty.trim(), 10) || 1 });
+    } else {
+      parsedLines.push({ sku: chunk, qty: 1 });
+    }
+  });
+
+  const totalQty = parsedLines.reduce((acc, l) => acc + l.qty, 0);
+
+  const newOrder = {
+    unit_id: unitId,
+    order_id: orderId,
+    channel: channel,
+    status: "OPEN",
+    items_count: `${totalQty} total items`,
+    lines: parsedLines,
+    scenarioKey: "CORRECT_ORDER"
+  };
+
+  if (!QUEUE_DATA[currentTenant]) {
+    QUEUE_DATA[currentTenant] = [];
+  }
+  QUEUE_DATA[currentTenant].unshift(newOrder);
+
+  // Auto-increment IDs for next import
+  const nextNum = Math.floor(5000 + Math.random() * 4000);
+  if (document.getElementById("importOrderId")) document.getElementById("importOrderId").value = "ORD-" + nextNum;
+  if (document.getElementById("importUnitId")) document.getElementById("importUnitId").value = "UNIT-" + nextNum;
+
+  if (packNow) {
+    auditOrderFromQueue(unitId, orderId, channel, "CORRECT_ORDER");
+    showToast(`🚀 <strong>${orderId}</strong> created! Ready to photograph at Pack Station.`, "seal");
+  } else {
+    switchTab("queue");
+    renderQueue();
+    showToast(`📥 Ingested <strong>${orderId}</strong> (${totalQty} items) into Packing Queue.`, "seal");
+  }
 }
 
 // Benchmark Dataset Download Helpers
