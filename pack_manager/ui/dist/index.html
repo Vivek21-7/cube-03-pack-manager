@@ -14,433 +14,454 @@
 </head>
 <body>
 
-  <!-- Floating Neumorphic Top Navigation (Ref: Shyam Yemuka) -->
-  <header class="top-header-wrap">
-    <div class="top-header-pill neu-flat">
-      
-      <!-- Brand & Track -->
-      <div class="brand-section" onclick="switchTab('overview')">
-        <div class="brand-icon-well neu-icon-well">
-          <i data-lucide="package-check" style="width: 24px; height: 24px; stroke-width: 2.2;"></i>
+  <!-- App Shell: Fixed Sidebar + Main Content -->
+  <div class="app-container">
+
+    <!-- Fixed Sidebar Navigation (Ref: Cube-03) -->
+    <aside class="sidebar">
+      <div class="sidebar-brand" onclick="switchTab('overview')">
+        <div class="brand-icon-box">
+          <i data-lucide="package-check"></i>
         </div>
-        <div class="brand-title-wrap">
-          <span class="brand-title-text">Pack Manager</span>
-          <span class="brand-tagline">PRE-SEAL AUDIT INTELLIGENCE</span>
+        <div class="brand-titles">
+          <span class="brand-main">PACK MANAGER</span>
+          <span class="brand-track-tag">TRACK PCK &bull; CUBE 2026</span>
         </div>
       </div>
 
-      <!-- Navigation Pills -->
-      <nav class="nav-pills-group">
-        <button class="nav-pill-btn neu-flat-sm active" id="tabBtnStation" onclick="switchTab('station')">
-          <i data-lucide="camera" style="width: 16px; height: 16px;"></i>
+      <div class="sidebar-nav-label">Workspace</div>
+      <nav class="sidebar-nav">
+        <a class="nav-item active" id="tabBtnStation" onclick="switchTab('station')">
+          <i data-lucide="scan-line"></i>
           <span>Pack Station</span>
-        </button>
-        <button class="nav-pill-btn neu-flat-sm" id="tabBtnQueue" onclick="switchTab('queue')">
-          <i data-lucide="list-ordered" style="width: 16px; height: 16px;"></i>
-          <span>Queue</span>
-        </button>
-        <button class="nav-pill-btn neu-flat-sm" onclick="openOrderBuilderModal()">
-          <i data-lucide="sliders" style="width: 16px; height: 16px;"></i>
-          <span>Import</span>
-        </button>
-        <button class="nav-pill-btn neu-flat-sm" id="tabBtnEval" onclick="switchTab('eval')">
-          <i data-lucide="bar-chart-3" style="width: 16px; height: 16px; color: var(--neu-accent);"></i>
+        </a>
+        <a class="nav-item" id="tabBtnQueue" onclick="switchTab('queue')">
+          <i data-lucide="list-ordered"></i>
+          <span>Packing Queue</span>
+        </a>
+        <a class="nav-item" id="tabBtnOverview" onclick="switchTab('overview')">
+          <i data-lucide="home"></i>
+          <span>Overview</span>
+        </a>
+        <a class="nav-item" id="tabBtnAudit" onclick="switchTab('audit')">
+          <i data-lucide="shield-check"></i>
+          <span>Evidence &amp; Audit</span>
+        </a>
+        <a class="nav-item" id="tabBtnEval" onclick="switchTab('eval')">
+          <i data-lucide="bar-chart-3"></i>
           <span>Benchmarks</span>
-        </button>
-        <button class="nav-pill-btn neu-flat-sm" id="tabBtnAudit" onclick="switchTab('audit')">
-          <i data-lucide="shield-check" style="width: 16px; height: 16px;"></i>
-          <span>Evidence</span>
-        </button>
+        </a>
       </nav>
 
-      <!-- User / Station Pill -->
-      <div style="display: flex; align-items: center; gap: 10px;">
-        <div class="operator-badge-pill neu-pressed-sm">
-          <i data-lucide="user" style="width: 14px; height: 14px; color: var(--neu-accent);"></i>
-          <span style="font-weight: 700;">operator.alpha</span>
-          <span class="role-tag-mini">ALPHA</span>
-        </div>
-        <div class="operator-badge-pill neu-pressed-sm" style="font-family: var(--font-mono); font-size: 11px;">
-          <span>STATION-BAY-04</span>
+      <div class="sidebar-footer">
+        <div class="tenant-status-box">
+          <div class="tenant-status-title">Active Tenancy</div>
+          <div class="tenant-name-active" id="sidebarTenantTag">ORG_DEMO_ALPHA</div>
+          <div class="agent-live-indicator">
+            <span class="pulse-dot"></span>
+            <span>Gemini Vision Agent Live</span>
+          </div>
         </div>
       </div>
+    </aside>
 
-    </div>
-  </header>
-
-  <!-- Main Viewport -->
-  <main class="main-wrapper">
-    
-    <!-- ========================================================================= -->
-    <!-- TAB 2: PACK STATION (Primary View matching Shyam Yemuka / UNIT-5001 / capture) -->
-    <!-- ========================================================================= -->
-    <section class="tab-content active" id="tabStation">
-      <div class="pack-station-container">
-
-        <!-- Preset Test Scenarios Strip -->
-        <div class="scenarios-quick-strip neu-flat">
-          <span style="font-size: 11px; font-weight: 800; color: var(--neu-accent); letter-spacing: 0.8px; white-space: nowrap;">
-            <i data-lucide="play-circle" style="width: 14px; height: 14px; display: inline-block; vertical-align: -2px;"></i> SCENARIOS:
-          </span>
-          <button class="scenario-chip-btn active" data-scenario="CORRECT_ORDER" onclick="loadScenario('CORRECT_ORDER', this)">
-            <span style="color: #15803d; font-weight: 800;">✓ SEAL</span> 1. Clean Pack
-          </button>
-          <button class="scenario-chip-btn" data-scenario="MISSING_ITEM" onclick="loadScenario('MISSING_ITEM', this)">
-            <span style="color: #b91c1c; font-weight: 800;">✕ STOP</span> 2. Missing Item
-          </button>
-          <button class="scenario-chip-btn" data-scenario="WRONG_ITEM" onclick="loadScenario('WRONG_ITEM', this)">
-            <span style="color: #b91c1c; font-weight: 800;">✕ STOP</span> 3. Wrong Variant
-          </button>
-          <button class="scenario-chip-btn" data-scenario="EXTRA_ITEM" onclick="loadScenario('EXTRA_ITEM', this)">
-            <span style="color: #b91c1c; font-weight: 800;">✕ STOP</span> 4. Tape in Box
-          </button>
-          <button class="scenario-chip-btn" data-scenario="WRONG_QUANTITY" onclick="loadScenario('WRONG_QUANTITY', this)">
-            <span style="color: #b91c1c; font-weight: 800;">✕ STOP</span> 5. Shortage Qty
-          </button>
-          <button class="scenario-chip-btn" data-scenario="MULTI_IDENTICAL" onclick="loadScenario('MULTI_IDENTICAL', this)">
-            <span style="color: #15803d; font-weight: 800;">✓ SEAL</span> 6. 4x Mugs
-          </button>
-          <button class="scenario-chip-btn" data-scenario="VISUALLY_SIMILAR" onclick="loadScenario('VISUALLY_SIMILAR', this)">
-            <span style="color: #b91c1c; font-weight: 800;">✕ STOP</span> 7. Visual Mixup
-          </button>
-          <button class="scenario-chip-btn" data-scenario="AMBIGUOUS_CAPTURE" onclick="loadScenario('AMBIGUOUS_CAPTURE', this)">
-            <span style="color: #b45309; font-weight: 800;">? RETAKE</span> 8. Motion Blur
-          </button>
+    <!-- Main Viewport -->
+    <div class="main-content">
+      
+      <!-- Topbar Header -->
+      <header class="topbar">
+        <div class="topbar-breadcrumbs">
+          <span>Cube</span>
+          <span>/</span>
+          <span>PCK</span>
+          <span>/</span>
+          <strong id="topbarCurrentView">Pack Verification Station</strong>
         </div>
 
-        <!-- 1. Unit Header (Back Arrow + ORD-5001 + UNIT-5001 + Subtitle + Camera Icon) -->
-        <div class="unit-header-bar">
-          <div class="unit-header-left">
-            <button class="btn-back-square neu-flat hover:neu-flat-hover" onclick="switchTab('queue')" title="Back to Packing Queue">
-              <i data-lucide="arrow-left" style="width: 22px; height: 22px; stroke-width: 2.4;"></i>
-            </button>
-            <div class="unit-order-title-box">
-              <div class="unit-title-row">
-                <h1 class="unit-order-id" id="manifestOrderId">ORD-5001</h1>
-                <span class="unit-code-badge neu-pressed-sm" id="manifestPkgId">UNIT-5001</span>
-              </div>
-              <p class="unit-channel-sub">
-                CHANNEL: <span id="manifestClientId">SHOPIFY</span> &bull; TENANT: <span id="manifestOrgId">ORG_DEMO_ALPHA</span> &bull; BAY-04
-              </p>
-            </div>
-          </div>
-
-          <button class="btn-camera-square neu-icon-well" onclick="triggerVerification()" title="Trigger Overhead Vision Audit">
-            <i data-lucide="camera" style="width: 22px; height: 22px; stroke-width: 2.2;"></i>
-          </button>
-        </div>
-
-        <!-- 2. Card 1: ORDER PACKING MANIFEST -->
-        <div class="manifest-card neu-flat">
-          <div class="manifest-card-header">
-            <span class="manifest-heading-label">
-              <i data-lucide="package"></i> Order Packing Manifest
-            </span>
-            <span class="manifest-count-label" id="manifestItemsCount">2 Line Items</span>
-          </div>
-
-          <div class="manifest-items-list" id="expectedItemsBody">
-            <!-- Dynamically populated rows like Shyam's UI: SKU on left, Target Qty on right -->
-            <div class="manifest-item-row neu-pressed">
-              <span class="manifest-item-name">MUG-BLUE</span>
-              <div class="manifest-item-target">Target Qty: <span class="qty-circle">1</span></div>
-            </div>
-            <div class="manifest-item-row neu-pressed">
-              <span class="manifest-item-name">NOTEBOOK-A5-BLACK</span>
-              <div class="manifest-item-target">Target Qty: <span class="qty-circle">1</span></div>
-            </div>
+        <div class="topbar-actions">
+          <div class="station-badge">STATION-BAY-04</div>
+          <div class="operator-pill">
+            <span class="pulse-dot"></span>
+            <span id="topTenantLabel">ORG_DEMO_ALPHA</span>
+            <span style="color: var(--text-muted);">&bull;</span>
+            <span style="color: var(--color-primary); font-weight: 700;">operator.alpha</span>
           </div>
         </div>
+      </header>
 
-        <!-- 3. Card 2: Pre-Seal Photos (0/3) -->
-        <div class="capture-card neu-flat">
-          <div class="capture-card-title-group">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <h2>Pre-Seal Photos (<span id="photoCountLabel">1</span>/3)</h2>
-              <span class="role-tag-mini" id="cameraLightingBadge">STANDARD LIGHTING</span>
+      <!-- Content Area -->
+      <main class="content-area">
+
+        <!-- ========================================================================= -->
+        <!-- TAB 2: PACK STATION DASHBOARD (Exact Match to Shyam Yemuka / UNIT-5001 / capture) -->
+        <!-- ========================================================================= -->
+        <section class="tab-content active" id="tabStation">
+          <div class="station-dashboard-layout">
+
+            <!-- Scenario Quick Picker Strip -->
+            <div class="scenarios-quick-strip neu-flat">
+              <span style="font-size: 11px; font-weight: 800; color: var(--neu-accent); letter-spacing: 0.8px; white-space: nowrap;">
+                <i data-lucide="play-circle" style="width: 14px; height: 14px; display: inline-block; vertical-align: -2px;"></i> TEST CASES:
+              </span>
+              <button class="scenario-chip-btn active" data-scenario="CORRECT_ORDER" onclick="loadScenario('CORRECT_ORDER', this)">
+                <span style="color: #15803d; font-weight: 800;">✓ SEAL</span> 1. Clean Pack
+              </button>
+              <button class="scenario-chip-btn" data-scenario="MISSING_ITEM" onclick="loadScenario('MISSING_ITEM', this)">
+                <span style="color: #b91c1c; font-weight: 800;">✕ STOP</span> 2. Missing Item
+              </button>
+              <button class="scenario-chip-btn" data-scenario="WRONG_ITEM" onclick="loadScenario('WRONG_ITEM', this)">
+                <span style="color: #b91c1c; font-weight: 800;">✕ STOP</span> 3. Wrong Variant
+              </button>
+              <button class="scenario-chip-btn" data-scenario="EXTRA_ITEM" onclick="loadScenario('EXTRA_ITEM', this)">
+                <span style="color: #b91c1c; font-weight: 800;">✕ STOP</span> 4. Tape in Box
+              </button>
+              <button class="scenario-chip-btn" data-scenario="WRONG_QUANTITY" onclick="loadScenario('WRONG_QUANTITY', this)">
+                <span style="color: #b91c1c; font-weight: 800;">✕ STOP</span> 5. Shortage Qty
+              </button>
+              <button class="scenario-chip-btn" data-scenario="MULTI_IDENTICAL" onclick="loadScenario('MULTI_IDENTICAL', this)">
+                <span style="color: #15803d; font-weight: 800;">✓ SEAL</span> 6. 4x Mugs
+              </button>
+              <button class="scenario-chip-btn" data-scenario="VISUALLY_SIMILAR" onclick="loadScenario('VISUALLY_SIMILAR', this)">
+                <span style="color: #b91c1c; font-weight: 800;">✕ STOP</span> 7. Visual Mixup
+              </button>
+              <button class="scenario-chip-btn" data-scenario="AMBIGUOUS_CAPTURE" onclick="loadScenario('AMBIGUOUS_CAPTURE', this)">
+                <span style="color: #b45309; font-weight: 800;">? RETAKE</span> 8. Motion Blur
+              </button>
             </div>
-            <p>Capture 1 to 3 photos: recommended top-down interior, 45-degree angle, or close-up.</p>
-          </div>
 
-          <!-- Hidden file inputs -->
-          <input type="file" id="fileInputCamera" accept="image/*" capture="environment" style="display: none;" onchange="handlePhotoUpload(this)" />
-          <input type="file" id="fileInputUpload" accept="image/*" multiple style="display: none;" onchange="handlePhotoUpload(this)" />
-
-          <!-- 3 Photo Angle Slots -->
-          <div class="photo-angles-grid">
-            
-            <!-- Angle 1: Top-Down Interior -->
-            <div class="photo-angle-slot neu-pressed-deep" id="angleSlot1">
-              <div class="laser-line" id="angleLaser1"></div>
-              <div class="angle-icon-well neu-icon-well" id="angleIcon1">
-                <i data-lucide="image" style="width: 22px; height: 22px;"></i>
+            <!-- 1. Unit Header (Back Button + ORD-5001 + UNIT-5001 Badge + Channel/Tenant + Camera Icon) -->
+            <div class="unit-header-bar">
+              <div class="unit-header-left">
+                <button class="btn-back-square neu-flat hover:neu-flat-hover" onclick="switchTab('queue')" title="Back to Packing Queue">
+                  <i data-lucide="arrow-left" style="width: 22px; height: 22px; stroke-width: 2.4;"></i>
+                </button>
+                <div class="unit-order-title-box">
+                  <div class="unit-title-row">
+                    <h1 class="unit-order-id" id="manifestOrderId">ORD-5001</h1>
+                    <span class="unit-code-badge neu-pressed-sm" id="manifestPkgId">UNIT-5001</span>
+                  </div>
+                  <p class="unit-channel-sub">
+                    CHANNEL: <span id="manifestClientId">SHOPIFY</span> &bull; TENANT: <span id="manifestOrgId">ORG_DEMO_ALPHA</span> &bull; BAY-04
+                  </p>
+                </div>
               </div>
-              <span class="angle-title">Angle 1</span>
-              <span class="angle-subtitle" id="angleSub1">Top-Down Interior</span>
-              <div id="angleDetections1"></div>
+
+              <button class="btn-camera-square neu-icon-well" onclick="triggerVerification()" title="Trigger Overhead Vision Audit">
+                <i data-lucide="camera" style="width: 22px; height: 22px; stroke-width: 2.2;"></i>
+              </button>
             </div>
 
-            <!-- Angle 2: 45° Angle -->
-            <div class="photo-angle-slot neu-pressed-deep" id="angleSlot2">
-              <div class="angle-icon-well neu-icon-well">
-                <i data-lucide="image" style="width: 22px; height: 22px;"></i>
+            <!-- 2. Card 1: ORDER PACKING MANIFEST -->
+            <div class="manifest-card neu-flat">
+              <div class="manifest-card-header">
+                <span class="manifest-heading-label">
+                  <i data-lucide="package"></i> Order Packing Manifest
+                </span>
+                <span class="manifest-count-label" id="manifestItemsCount">2 Line Items</span>
               </div>
-              <span class="angle-title">Angle 2</span>
-              <span class="angle-subtitle">45-Degree Incline</span>
-            </div>
 
-            <!-- Angle 3: Close-Up -->
-            <div class="photo-angle-slot neu-pressed-deep" id="angleSlot3">
-              <div class="angle-icon-well neu-icon-well">
-                <i data-lucide="image" style="width: 22px; height: 22px;"></i>
+              <div class="manifest-items-list" id="expectedItemsBody">
+                <div class="manifest-item-row neu-pressed">
+                  <span class="manifest-item-name">MUG-BLUE</span>
+                  <div class="manifest-item-target">Target Qty: <span class="qty-circle">1</span></div>
+                </div>
+                <div class="manifest-item-row neu-pressed">
+                  <span class="manifest-item-name">NOTEBOOK-A5-BLACK</span>
+                  <div class="manifest-item-target">Target Qty: <span class="qty-circle">1</span></div>
+                </div>
               </div>
-              <span class="angle-title">Angle 3</span>
-              <span class="angle-subtitle">Macro Close-Up</span>
             </div>
 
-          </div>
+            <!-- 3. Card 2: Pre-Seal Photos (0/3) -->
+            <div class="capture-card neu-flat">
+              <div class="capture-card-title-group">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <h2>Pre-Seal Photos (<span id="photoCountLabel">1</span>/3)</h2>
+                  <span class="station-badge" id="cameraLightingBadge" style="color: var(--neu-accent);">STANDARD LIGHTING</span>
+                </div>
+                <p>Capture 1 to 3 photos: recommended top-down interior, 45-degree angle, or close-up.</p>
+              </div>
 
-          <!-- Action Buttons Row -->
-          <div class="photo-capture-actions-row">
-            <button type="button" class="neu-btn-secondary" onclick="document.getElementById('fileInputCamera').click()">
-              <i data-lucide="camera" style="width: 18px; height: 18px; color: var(--neu-accent);"></i>
-              <span>Open Camera</span>
-            </button>
-            <button type="button" class="neu-btn-secondary" onclick="document.getElementById('fileInputUpload').click()">
-              <i data-lucide="upload" style="width: 18px; height: 18px; color: var(--neu-accent);"></i>
-              <span>Upload Photo File</span>
-            </button>
-          </div>
+              <!-- Hidden file inputs -->
+              <input type="file" id="fileInputCamera" accept="image/*" capture="environment" style="display: none;" onchange="handlePhotoUpload(this)" />
+              <input type="file" id="fileInputUpload" accept="image/*" multiple style="display: none;" onchange="handlePhotoUpload(this)" />
 
-          <!-- Large Prominent Audit Button -->
-          <div style="padding-top: 14px; border-top: 1px solid var(--neu-border-color);">
-            <button type="button" class="neu-btn-highlight" id="btnRunVerify" onclick="triggerVerification()">
-              <i data-lucide="shield-check" style="width: 20px; height: 20px; stroke-width: 2.5;"></i>
-              <span>Audit Box & Generate Decision</span>
-            </button>
-            <p class="subtext-disclaimer">
-              Single model observation call &bull; Photos hashed and stored fail-open &bull; Verdicts evaluated by deterministic code
-            </p>
-          </div>
-        </div>
+              <!-- 3 Photo Angle Slots -->
+              <div class="photo-angles-grid">
+                
+                <!-- Angle 1: Top-Down Interior -->
+                <div class="photo-angle-slot neu-pressed-deep" id="angleSlot1">
+                  <div class="laser-line" id="angleLaser1"></div>
+                  <div class="angle-icon-well neu-icon-well" id="angleIcon1">
+                    <i data-lucide="image" style="width: 22px; height: 22px;"></i>
+                  </div>
+                  <span class="angle-title">Angle 1</span>
+                  <span class="angle-subtitle" id="angleSub1">Top-Down Interior</span>
+                  <div id="angleDetections1"></div>
+                </div>
 
-        <!-- 4. Card 3: Verification Decision & 7-Stage Breakdown -->
-        <div class="verification-results-panel neu-flat" id="resultsSection">
-          
-          <!-- Large Operational Verdict Hero Banner -->
-          <div class="decision-hero-banner seal" id="decisionBanner">
-            <div class="decision-icon-large" id="decisionIcon">
-              <i data-lucide="shield-check" style="width: 32px; height: 32px; stroke-width: 2.5;"></i>
-            </div>
-            <div class="decision-hero-content">
-              <div class="decision-tag-eyebrow">OPERATIONAL VERDICT</div>
-              <h2 class="decision-main-title" id="decisionTitle">SEAL PACKAGE</h2>
-              <p class="decision-explainer-summary" id="decisionReason">
-                All 7 verification checks passed with grounded multimodal evidence. 100% bijective order match.
-              </p>
-            </div>
-            <div style="text-align: right; font-family: var(--font-mono); font-size: 10px; color: var(--neu-text-muted);">
-              <div>AGENT: pack-manager</div>
-              <div id="decisionTime">2026-10-04 18:45:00 UTC</div>
-              <div id="totalLatencyBadge" style="color: var(--neu-accent); font-weight: 700; margin-top: 2px;">Latency: 0.12 ms</div>
-            </div>
-          </div>
+                <!-- Angle 2: 45° Incline -->
+                <div class="photo-angle-slot neu-pressed-deep" id="angleSlot2">
+                  <div class="angle-icon-well neu-icon-well">
+                    <i data-lucide="image" style="width: 22px; height: 22px;"></i>
+                  </div>
+                  <span class="angle-title">Angle 2</span>
+                  <span class="angle-subtitle">45-Degree Incline</span>
+                </div>
 
-          <!-- Expected vs Observed Table -->
-          <div>
-            <div style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; color: var(--neu-text-secondary);">
-              Bijective SKU Manifest Verification
+                <!-- Angle 3: Macro Close-Up -->
+                <div class="photo-angle-slot neu-pressed-deep" id="angleSlot3">
+                  <div class="angle-icon-well neu-icon-well">
+                    <i data-lucide="image" style="width: 22px; height: 22px;"></i>
+                  </div>
+                  <span class="angle-title">Angle 3</span>
+                  <span class="angle-subtitle">Macro Close-Up</span>
+                </div>
+
+              </div>
+
+              <!-- Action Buttons Row -->
+              <div class="photo-capture-actions-row">
+                <button type="button" class="neu-btn-secondary" onclick="document.getElementById('fileInputCamera').click()">
+                  <i data-lucide="camera" style="width: 18px; height: 18px; color: var(--neu-accent);"></i>
+                  <span>Open Camera</span>
+                </button>
+                <button type="button" class="neu-btn-secondary" onclick="document.getElementById('fileInputUpload').click()">
+                  <i data-lucide="upload" style="width: 18px; height: 18px; color: var(--neu-accent);"></i>
+                  <span>Upload Photo File</span>
+                </button>
+              </div>
+
+              <!-- Large Prominent Audit Button -->
+              <div style="padding-top: 14px; border-top: 1px solid var(--neu-border-color);">
+                <button type="button" class="neu-btn-highlight" id="btnRunVerify" onclick="triggerVerification()">
+                  <i data-lucide="shield-check" style="width: 20px; height: 20px; stroke-width: 2.5;"></i>
+                  <span>Audit Box &amp; Generate Decision</span>
+                </button>
+                <p class="subtext-disclaimer">
+                  Single model observation call &bull; Photos hashed and stored fail-open &bull; Verdicts evaluated by deterministic code
+                </p>
+              </div>
             </div>
-            <div style="overflow-x: auto;">
-              <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
-                <thead>
-                  <tr style="text-align: left; border-bottom: 1px solid var(--neu-border-color); color: var(--neu-text-muted); font-size: 10px; text-transform: uppercase;">
-                    <th style="padding: 8px 12px;">SKU</th>
-                    <th style="padding: 8px 12px;">Product</th>
-                    <th style="padding: 8px 12px;">Expected</th>
-                    <th style="padding: 8px 12px;">Observed</th>
-                    <th style="padding: 8px 12px;">Status</th>
-                    <th style="padding: 8px 12px;">Confidence</th>
-                  </tr>
-                </thead>
-                <tbody id="quantityComparisonBody">
+
+            <!-- 4. Card 3: Verification Output & Results -->
+            <div class="verification-results-panel neu-flat" id="resultsSection">
+              
+              <!-- Large Operational Verdict Hero Banner -->
+              <div class="decision-hero-banner seal" id="decisionBanner">
+                <div class="decision-icon-large" id="decisionIcon">
+                  <i data-lucide="shield-check" style="width: 32px; height: 32px; stroke-width: 2.5;"></i>
+                </div>
+                <div class="decision-hero-content">
+                  <div class="decision-tag-eyebrow">OPERATIONAL VERDICT</div>
+                  <h2 class="decision-main-title" id="decisionTitle">SEAL PACKAGE</h2>
+                  <p class="decision-explainer-summary" id="decisionReason">
+                    All 7 verification checks passed with grounded multimodal evidence. 100% bijective order match.
+                  </p>
+                </div>
+                <div style="text-align: right; font-family: var(--font-mono); font-size: 10px; color: var(--neu-text-muted);">
+                  <div>AGENT: pack-manager</div>
+                  <div id="decisionTime">2026-10-04 18:45:00 UTC</div>
+                  <div id="totalLatencyBadge" style="color: var(--neu-accent); font-weight: 700; margin-top: 2px;">Latency: 0.12 ms</div>
+                </div>
+              </div>
+
+              <!-- Expected vs Observed Table -->
+              <div>
+                <div style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; color: var(--neu-text-secondary);">
+                  Bijective SKU Manifest Verification
+                </div>
+                <div style="overflow-x: auto;">
+                  <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                    <thead>
+                      <tr style="text-align: left; border-bottom: 1px solid var(--neu-border-color); color: var(--neu-text-muted); font-size: 10px; text-transform: uppercase;">
+                        <th style="padding: 8px 12px;">SKU</th>
+                        <th style="padding: 8px 12px;">Product</th>
+                        <th style="padding: 8px 12px; text-align: center;">Expected</th>
+                        <th style="padding: 8px 12px; text-align: center;">Observed</th>
+                        <th style="padding: 8px 12px;">Status</th>
+                        <th style="padding: 8px 12px;">Confidence</th>
+                      </tr>
+                    </thead>
+                    <tbody id="quantityComparisonBody">
+                      <!-- Dynamically populated -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- 7 Discrete Checks Flow -->
+              <div>
+                <div style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; color: var(--neu-text-secondary);">
+                  7-Stage Deterministic Verification Pipeline
+                </div>
+                <div class="checks-flow-grid" id="checksGrid">
                   <!-- Dynamically populated -->
-                </tbody>
-              </table>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Footer Card -->
+            <div class="manifest-card neu-pressed" style="padding: 18px 24px; border-radius: 24px; font-size: 12px; color: var(--neu-text-muted); display: flex; align-items: center; justify-content: space-between;">
+              <div style="display: flex; align-items: center; gap: 8px; color: var(--neu-text-secondary); font-weight: 600;">
+                <i data-lucide="shield-check" style="width: 16px; height: 16px; color: var(--neu-accent);"></i>
+                <span>Cryptographic Content Hash (SHA-256) &amp; Sequential Audit Chain Verification.</span>
+              </div>
+              <div>Pack Manager Enterprise Platform &bull; Autonomous Packaging Integrity</div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- ========================================================================= -->
+        <!-- TAB 1: PACKING STATION QUEUE -->
+        <!-- ========================================================================= -->
+        <section class="tab-content" id="tabQueue">
+          <div class="panel">
+            <div class="panel-header">
+              <div>
+                <div class="panel-title"><i data-lucide="list-ordered"></i> Packing Station Queue</div>
+                <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+                  Open orders scheduled for pre-seal audit &bull; Tenancy active for <strong id="queueTenantTag">ORG_DEMO_ALPHA</strong>
+                </div>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn-secondary" id="btnTenantAlpha" onclick="setTenant('ORG_DEMO_ALPHA')">Alpha Tenant</button>
+                <button class="btn-secondary" id="btnTenantBravo" onclick="setTenant('ORG_DEMO_BRAVO')">Bravo Tenant</button>
+                <button class="btn-primary" onclick="openOrderBuilderModal()">+ Import Order</button>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div style="margin-bottom: 16px;">
+                <input type="text" id="queueSearchInput" placeholder="Filter orders by SKU, Order ID, or Unit ID..." oninput="filterQueue()" style="width: 100%;" />
+              </div>
+              <div class="orders-grid" id="ordersGridContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;">
+                <!-- Dynamically populated -->
+              </div>
             </div>
           </div>
+        </section>
 
-          <!-- 7 Discrete Checks Flow -->
-          <div>
-            <div style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; color: var(--neu-text-secondary);">
-              7-Stage Deterministic Verification Pipeline
-            </div>
-            <div class="checks-flow-grid" id="checksGrid">
-              <!-- Dynamically populated -->
-            </div>
-          </div>
-
-        </div>
-
-      </div>
-    </section>
-
-    <!-- ========================================================================= -->
-    <!-- TAB 1: PACKING STATION QUEUE -->
-    <!-- ========================================================================= -->
-    <section class="tab-content" id="tabQueue">
-      <div class="pack-station-container" style="max-width: 1080px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-          <div>
-            <h2 style="font-size: 24px; font-weight: 800;">Packing Station Queue</h2>
-            <p style="font-size: 13px; color: var(--neu-text-secondary);">
-              Open cartons awaiting pre-seal verification &bull; Scoped to <strong id="queueTenantTag">ORG_DEMO_ALPHA</strong>
+        <!-- ========================================================================= -->
+        <!-- TAB 0: OVERVIEW -->
+        <!-- ========================================================================= -->
+        <section class="tab-content" id="tabOverview">
+          <div class="panel" style="padding: 32px;">
+            <span class="station-badge" style="color: var(--neu-accent); margin-bottom: 12px; display: inline-block;">AUTONOMOUS PACK VERIFICATION</span>
+            <h1 style="font-size: 32px; font-weight: 800; line-height: 1.2;">
+              Audit the Open Box <span style="color: var(--color-primary);">Before You Tape It Shut.</span>
+            </h1>
+            <p style="font-size: 15px; color: var(--text-secondary); margin: 12px 0 24px; line-height: 1.6; max-width: 720px;">
+              Pack Manager catches fulfillment errors at packing benches using a single multimodal photo of the open box. Fast, deterministic, and backed by a canonical SHA-256 evidence chain.
             </p>
-          </div>
-          <div style="display: flex; gap: 8px;">
-            <button class="neu-btn-secondary" id="btnTenantAlpha" onclick="setTenant('ORG_DEMO_ALPHA')">Alpha Tenant</button>
-            <button class="neu-btn-secondary" id="btnTenantBravo" onclick="setTenant('ORG_DEMO_BRAVO')">Bravo Tenant</button>
-            <button class="neu-btn-primary" onclick="openOrderBuilderModal()">+ Import Order</button>
-          </div>
-        </div>
-
-        <div class="scenarios-quick-strip neu-flat" style="margin-bottom: 16px;">
-          <input type="text" id="queueSearchInput" placeholder="Filter orders by SKU, Order ID, or Unit ID..." oninput="filterQueue()" style="background: transparent; border: none; font-size: 13px; width: 100%; padding: 6px 12px; outline: none;" />
-        </div>
-
-        <div class="orders-grid" id="ordersGridContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;">
-          <!-- Dynamically populated -->
-        </div>
-      </div>
-    </section>
-
-    <!-- ========================================================================= -->
-    <!-- TAB 0: OVERVIEW -->
-    <!-- ========================================================================= -->
-    <section class="tab-content" id="tabOverview">
-      <div class="pack-station-container" style="max-width: 960px;">
-        <div class="capture-card neu-flat" style="padding: 36px;">
-          <span class="role-tag-mini" style="align-self: flex-start; margin-bottom: 8px;">AUTONOMOUS PACK VERIFICATION</span>
-          <h1 style="font-size: 34px; font-weight: 800; line-height: 1.2;">
-            Audit the Open Box <span style="color: var(--neu-accent);">Before You Tape It Shut.</span>
-          </h1>
-          <p style="font-size: 15px; color: var(--neu-text-secondary); margin: 12px 0 24px; line-height: 1.6;">
-            Pack Manager catches fulfillment errors at packing benches using a single multimodal photo of the open box. Fast, deterministic, and backed by a canonical SHA-256 evidence chain.
-          </p>
-          <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-            <button class="neu-btn-highlight" style="width: auto; padding: 12px 24px;" onclick="switchTab('station')">
-              Open Pack Station &rarr;
-            </button>
-            <button class="neu-btn-secondary" onclick="switchTab('queue')">
-              Browse Queue
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ========================================================================= -->
-    <!-- TAB 3: EVIDENCE & AUDIT -->
-    <!-- ========================================================================= -->
-    <section class="tab-content" id="tabAudit">
-      <div class="pack-station-container">
-        <div class="manifest-card neu-flat">
-          <div class="manifest-card-header">
-            <span class="manifest-heading-label"><i data-lucide="file-code"></i> Evidence Contract (v1.0.0)</span>
-            <button class="neu-btn-secondary" onclick="copyEvidenceHash()" style="padding: 6px 14px; font-size: 11px;">Copy Hash</button>
-          </div>
-          <div class="neu-pressed-sm" style="padding: 10px 14px; border-radius: 14px; font-family: var(--font-mono); font-size: 11px; word-break: break-all;">
-            SHA-256: <strong id="auditContentHash" style="color: var(--neu-accent);">e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</strong>
-          </div>
-          <pre style="background: #0f172a; color: #94a3b8; padding: 16px; border-radius: 18px; font-family: var(--font-mono); font-size: 11px; max-height: 380px; overflow: auto;"><code id="evidenceJsonViewer">{ "status": "Run verification to view contract JSON" }</code></pre>
-        </div>
-
-        <!-- Supervisor Override Form -->
-        <div class="capture-card neu-flat">
-          <h3 style="font-size: 16px; font-weight: 800;">Supervisor Manual Override</h3>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px;">
-            <div>
-              <label style="font-size: 11px; font-weight: 700; color: var(--neu-text-secondary);">SUPERVISOR ID</label>
-              <input type="text" id="overrideSupervisorInput" value="QA_SUPERVISOR_07" class="neu-pressed" style="width: 100%; border-radius: 12px; padding: 8px 12px; margin-top: 4px; font-size: 12px;" />
-            </div>
-            <div>
-              <label style="font-size: 11px; font-weight: 700; color: var(--neu-text-secondary);">AUTHORIZED DECISION</label>
-              <select id="overrideDecisionSelect" class="neu-pressed" style="width: 100%; border-radius: 12px; padding: 8px 12px; margin-top: 4px; font-size: 12px;">
-                <option value="SEAL">Authorize SEAL (Manual Clearance)</option>
-                <option value="STOP_AND_FIX">Enforce STOP & FIX (Re-pack required)</option>
-              </select>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+              <button class="btn-primary" onclick="switchTab('station')">
+                Open Pack Station &rarr;
+              </button>
+              <button class="btn-secondary" onclick="switchTab('queue')">
+                Browse Queue
+              </button>
             </div>
           </div>
-          <div style="margin-top: 10px;">
-            <label style="font-size: 11px; font-weight: 700; color: var(--neu-text-secondary);">MANDATORY AUDIT REASON</label>
-            <input type="text" id="overrideReasonInput" placeholder="Physical inspection justification..." class="neu-pressed" style="width: 100%; border-radius: 12px; padding: 8px 12px; margin-top: 4px; font-size: 12px;" />
-          </div>
-          <button class="neu-btn-highlight" onclick="submitOverride()" style="margin-top: 14px; width: auto; align-self: flex-start;">
-            Commit Override & Log Audit Hash
-          </button>
-          <div id="overrideStatusBanner" style="display: none; margin-top: 10px; font-size: 12px;"></div>
-          <div id="overrideHistoryList" style="margin-top: 14px;"></div>
-        </div>
-      </div>
-    </section>
+        </section>
 
-    <!-- ========================================================================= -->
-    <!-- TAB 4: BENCHMARKS -->
-    <!-- ========================================================================= -->
-    <section class="tab-content" id="tabEval">
-      <div class="pack-station-container" style="max-width: 960px;">
-        <div class="manifest-card neu-flat">
-          <div class="manifest-card-header">
-            <div>
-              <span class="manifest-heading-label"><i data-lucide="bar-chart-2"></i> Held-Out Benchmark Results (N=50)</span>
-              <p style="font-size: 12px; color: var(--neu-text-secondary); margin-top: 4px;">Zero Critical Escapes &bull; Standardized Multi-Channel Dataset</p>
+        <!-- ========================================================================= -->
+        <!-- TAB 3: EVIDENCE & AUDIT -->
+        <!-- ========================================================================= -->
+        <section class="tab-content" id="tabAudit">
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title"><i data-lucide="file-code"></i> Immutable Evidence Contract (v1.0.0)</div>
+              <button class="btn-secondary" onclick="copyEvidenceHash()">Copy Hash</button>
             </div>
-            <div style="display: flex; gap: 8px;">
-              <button class="neu-btn-secondary" onclick="downloadBenchmarkJson()" style="padding: 6px 12px; font-size: 11px;">JSON</button>
-              <button class="neu-btn-secondary" onclick="downloadBenchmarkCsv()" style="padding: 6px 12px; font-size: 11px;">CSV</button>
+            <div class="panel-body">
+              <div style="background: #edf3f0; padding: 10px 14px; border-radius: 8px; font-family: var(--font-mono); font-size: 11px; word-break: break-all; margin-bottom: 14px;">
+                SHA-256: <strong id="auditContentHash" style="color: var(--color-primary);">e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</strong>
+              </div>
+              <pre style="background: #111a1e; color: #93c5fd; padding: 16px; border-radius: 12px; font-family: var(--font-mono); font-size: 11px; max-height: 380px; overflow: auto;"><code id="evidenceJsonViewer">{ "status": "Run verification to view contract JSON" }</code></pre>
             </div>
           </div>
 
-          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 12px;">
-            <div class="neu-pressed" style="padding: 14px; border-radius: 18px; text-align: center;">
-              <div style="font-size: 10px; font-weight: 800; color: var(--neu-text-muted);">FALSE-SEAL RATE</div>
-              <div style="font-size: 26px; font-weight: 800; color: #16a34a; margin: 4px 0;">0.0%</div>
-              <div style="font-size: 10px; color: var(--neu-text-muted);">Zero defect escapes</div>
+          <!-- Supervisor Override Form -->
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title"><i data-lucide="user-check"></i> Supervisor Manual Override</div>
+              <span class="station-badge">Audit Trail Enforced</span>
             </div>
-            <div class="neu-pressed" style="padding: 14px; border-radius: 18px; text-align: center;">
-              <div style="font-size: 10px; font-weight: 800; color: var(--neu-text-muted);">FALSE-STOP RATE</div>
-              <div style="font-size: 26px; font-weight: 800; color: #16a34a; margin: 4px 0;">0.0%</div>
-              <div style="font-size: 10px; color: var(--neu-text-muted);">Zero false alarms</div>
-            </div>
-            <div class="neu-pressed" style="padding: 14px; border-radius: 18px; text-align: center;">
-              <div style="font-size: 10px; font-weight: 800; color: var(--neu-text-muted);">COHEN'S KAPPA</div>
-              <div style="font-size: 26px; font-weight: 800; color: #0284c7; margin: 4px 0;">0.895</div>
-              <div style="font-size: 10px; color: var(--neu-text-muted);">Substantial agreement</div>
-            </div>
-            <div class="neu-pressed" style="padding: 14px; border-radius: 18px; text-align: center;">
-              <div style="font-size: 10px; font-weight: 800; color: var(--neu-text-muted);">MEDIAN LATENCY</div>
-              <div style="font-size: 26px; font-weight: 800; color: #7c3aed; margin: 4px 0;">1646 ms</div>
-              <div style="font-size: 10px; color: var(--neu-text-muted);">Gemini 2.0 Flash</div>
+            <div class="panel-body">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                <div>
+                  <label style="font-size: 11px; font-weight: 700; color: var(--text-secondary);">SUPERVISOR ID</label>
+                  <input type="text" id="overrideSupervisorInput" value="QA_SUPERVISOR_07" style="width: 100%; margin-top: 4px;" />
+                </div>
+                <div>
+                  <label style="font-size: 11px; font-weight: 700; color: var(--text-secondary);">AUTHORIZED DECISION</label>
+                  <select id="overrideDecisionSelect" style="width: 100%; margin-top: 4px;">
+                    <option value="SEAL">Authorize SEAL (Manual Clearance)</option>
+                    <option value="STOP_AND_FIX">Enforce STOP & FIX (Re-pack required)</option>
+                  </select>
+                </div>
+              </div>
+              <div style="margin-top: 14px;">
+                <label style="font-size: 11px; font-weight: 700; color: var(--text-secondary);">MANDATORY AUDIT REASON</label>
+                <input type="text" id="overrideReasonInput" placeholder="Physical inspection justification..." style="width: 100%; margin-top: 4px;" />
+              </div>
+              <button class="btn-primary" onclick="submitOverride()" style="margin-top: 16px;">
+                Commit Override &amp; Log Audit Hash
+              </button>
+              <div id="overrideStatusBanner" style="display: none; margin-top: 10px; font-size: 12px;"></div>
+              <div id="overrideHistoryList" style="margin-top: 14px;"></div>
             </div>
           </div>
-        </div>
-      </div>
-    </section>
+        </section>
 
-    <!-- Footer matching Shyam Yemuka -->
-    <footer class="footer-wrap">
-      <div class="footer-pill-card neu-pressed">
-        <div class="footer-hash-badge">
-          <div class="brand-icon-well neu-flat-sm" style="width: 28px; height: 28px; border-radius: 50%;">
-            <i data-lucide="shield-check" style="width: 14px; height: 14px; color: var(--neu-accent);"></i>
+        <!-- ========================================================================= -->
+        <!-- TAB 4: BENCHMARKS -->
+        <!-- ========================================================================= -->
+        <section class="tab-content" id="tabEval">
+          <div class="panel">
+            <div class="panel-header">
+              <div>
+                <div class="panel-title"><i data-lucide="bar-chart-2"></i> Held-Out Benchmark Results (N=50)</div>
+                <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Zero Critical Escapes &bull; Standardized Multi-Channel Dataset</div>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn-secondary" onclick="downloadBenchmarkJson()">JSON</button>
+                <button class="btn-secondary" onclick="downloadBenchmarkCsv()">CSV</button>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;">
+                <div style="background: var(--bg-surface-alt); padding: 16px; border-radius: 12px; text-align: center; border: 1px solid var(--border-subtle);">
+                  <div style="font-size: 10px; font-weight: 800; color: var(--text-muted);">FALSE-SEAL RATE</div>
+                  <div style="font-size: 28px; font-weight: 800; color: #16a34a; margin: 4px 0;">0.0%</div>
+                  <div style="font-size: 10px; color: var(--text-muted);">Zero defect escapes</div>
+                </div>
+                <div style="background: var(--bg-surface-alt); padding: 16px; border-radius: 12px; text-align: center; border: 1px solid var(--border-subtle);">
+                  <div style="font-size: 10px; font-weight: 800; color: var(--text-muted);">FALSE-STOP RATE</div>
+                  <div style="font-size: 28px; font-weight: 800; color: #16a34a; margin: 4px 0;">0.0%</div>
+                  <div style="font-size: 10px; color: var(--text-muted);">Zero false alarms</div>
+                </div>
+                <div style="background: var(--bg-surface-alt); padding: 16px; border-radius: 12px; text-align: center; border: 1px solid var(--border-subtle);">
+                  <div style="font-size: 10px; font-weight: 800; color: var(--text-muted);">COHEN'S KAPPA</div>
+                  <div style="font-size: 28px; font-weight: 800; color: #0284c7; margin: 4px 0;">0.895</div>
+                  <div style="font-size: 10px; color: var(--text-muted);">Substantial agreement</div>
+                </div>
+                <div style="background: var(--bg-surface-alt); padding: 16px; border-radius: 12px; text-align: center; border: 1px solid var(--border-subtle);">
+                  <div style="font-size: 10px; font-weight: 800; color: var(--text-muted);">MEDIAN LATENCY</div>
+                  <div style="font-size: 28px; font-weight: 800; color: #7c3aed; margin: 4px 0;">1646 ms</div>
+                  <div style="font-size: 10px; color: var(--text-muted);">Gemini 2.0 Flash</div>
+                </div>
+              </div>
+            </div>
           </div>
-          <span>Cryptographic Content Hash (SHA-256) &amp; Sequential Audit Chain Verification.</span>
-        </div>
-        <div>Pack Manager Enterprise Platform &bull; Autonomous Packaging Integrity</div>
-      </div>
-    </footer>
+        </section>
 
-  </main>
+      </main>
+    </div>
+
+  </div>
 
   <!-- Modal: Custom Order Builder -->
   <div class="modal-backdrop" id="orderBuilderModal" style="display: none;">
@@ -464,8 +485,8 @@
         </table>
       </div>
       <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px;">
-        <button class="neu-btn-secondary" onclick="closeOrderBuilderModal()">Cancel</button>
-        <button class="neu-btn-highlight" style="width: auto; padding: 10px 20px;" onclick="applyCustomOrderFromBuilder()">
+        <button class="btn-secondary" onclick="closeOrderBuilderModal()">Cancel</button>
+        <button class="btn-primary" onclick="applyCustomOrderFromBuilder()">
           Apply &amp; Audit Box
         </button>
       </div>
