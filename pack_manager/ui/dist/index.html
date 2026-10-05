@@ -249,12 +249,43 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* ==========================================================================
-   Main Stage Container
+   Main Stage Container (Wide Ergonomic Split Layout)
    ========================================================================== */
 .main-stage {
-  max-width: 680px;
+  max-width: 1360px;
   margin: 0 auto;
-  padding: 0 16px;
+  padding: 0 20px;
+}
+
+/* Two-column layout for Station tab: Left = Station Camera & Manifest, Right = Real-Time Verification Dashboard */
+.station-split-grid {
+  display: grid;
+  grid-template-columns: 480px 1fr;
+  gap: 22px;
+  align-items: start;
+}
+
+.station-col-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0px;
+}
+
+.station-col-right {
+  display: flex;
+  flex-direction: column;
+  gap: 0px;
+  position: sticky;
+  top: 86px;
+}
+
+@media (max-width: 1080px) {
+  .station-split-grid {
+    grid-template-columns: 1fr;
+  }
+  .station-col-right {
+    position: static;
+  }
 }
 
 /* Tab Content Visibility */
@@ -686,16 +717,16 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* ==========================================================================
-   Card 3: Verification Output & Results
+   Card 3: Verification Output & Results Dashboard (Right-Side Panel)
    ========================================================================== */
 .verification-results-panel {
   background: var(--card-bg);
   border-radius: var(--card-radius);
-  padding: 22px;
+  padding: 24px;
   box-shadow: var(--shadow-card);
   margin-bottom: 18px;
   border: 1px solid rgba(255, 255, 255, 0.7);
-  display: none;
+  display: block;
 }
 
 .verification-results-panel.visible {
@@ -1497,184 +1528,195 @@ input:focus, select:focus, textarea:focus {
         </button>
       </div>
 
-      <!-- Unit Header (Back Button + ORD-5001 + UNIT-5001 Badge + Channel/Tenant + Camera Icon) -->
-      <div class="unit-header-bar">
-        <div class="unit-header-left">
-          <button class="btn-back-square" onclick="switchTab('queue')" title="Back to Packing Queue">
-            <i data-lucide="arrow-left" style="width: 20px; height: 20px; stroke-width: 2.2;"></i>
-          </button>
-          <div>
-            <div class="unit-title-row">
-              <h1 class="unit-order-id" id="manifestOrderId">ORD-5001</h1>
-              <span class="unit-code-badge" id="manifestPkgId">UNIT-5001</span>
-            </div>
-            <p class="unit-channel-sub">
-              CHANNEL: <span id="manifestClientId">SHOPIFY</span> &bull; TENANT: <span id="manifestOrgId">ORG_DEMO_ALPHA</span> &bull; <span id="stationBayLabel">STATION-BAY-04</span>
-            </p>
-          </div>
-        </div>
-
-        <button class="btn-camera-square" onclick="triggerVerification()" title="Trigger Overhead Vision Audit">
-          <i data-lucide="camera" style="width: 20px; height: 20px; stroke-width: 2.2;"></i>
-        </button>
-      </div>
-
-      <!-- Card 1: ORDER PACKING MANIFEST -->
-      <div class="manifest-card">
-        <div class="manifest-card-header">
-          <span class="manifest-heading-label">
-            <i data-lucide="box" style="width: 17px; height: 17px; color: var(--color-terracotta);"></i>
-            <span>ORDER PACKING MANIFEST</span>
-          </span>
-          <span class="manifest-count-label" id="manifestItemsCount">2 Line Items</span>
-        </div>
-
-        <div class="manifest-items-list" id="expectedItemsBody">
-          <div class="manifest-item-row">
-            <span class="manifest-item-name">MUG-BLUE</span>
-            <div class="manifest-item-target">Target Qty: <span class="qty-circle">1</span></div>
-          </div>
-          <div class="manifest-item-row">
-            <span class="manifest-item-name">NOTEBOOK-A5-BLACK</span>
-            <div class="manifest-item-target">Target Qty: <span class="qty-circle">1</span></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Card 2: Pre-Seal Photos (0/3) -->
-      <div class="capture-card">
-        <div class="capture-card-title-group">
-          <h2>Pre-Seal Photos (<span id="photoCountLabel">0</span>/3)</h2>
-          <p>Capture 1 to 3 photos: recommended top-down interior, 45-degree angle, or close-up.</p>
-        </div>
-
-        <!-- Hidden file inputs -->
-        <input type="file" id="fileInputCamera" accept="image/*" capture="environment" style="display: none;" onchange="handlePhotoUpload(this)" />
-        <input type="file" id="fileInputUpload" accept="image/*" multiple style="display: none;" onchange="handlePhotoUpload(this)" />
-
-        <!-- 3 Photo Angle Slots -->
-        <div class="photo-angles-grid">
-          
-          <!-- Angle 1: Top-Down Interior -->
-          <div class="photo-angle-slot" id="angleSlot1" onclick="document.getElementById('fileInputUpload').click()">
-            <div class="laser-line" id="angleLaser1"></div>
-            <div class="angle-icon-well" id="angleIcon1">
-              <i data-lucide="image" style="width: 22px; height: 22px;"></i>
-            </div>
-            <span class="angle-title">Angle 1</span>
-            <span class="angle-subtitle" id="angleSub1">Empty Slot</span>
-            <div id="angleDetections1"></div>
-          </div>
-
-          <!-- Angle 2: 45° Incline -->
-          <div class="photo-angle-slot" id="angleSlot2" onclick="document.getElementById('fileInputUpload').click()">
-            <div class="angle-icon-well">
-              <i data-lucide="image" style="width: 22px; height: 22px;"></i>
-            </div>
-            <span class="angle-title">Angle 2</span>
-            <span class="angle-subtitle">Empty Slot</span>
-          </div>
-
-          <!-- Angle 3: Macro Close-Up -->
-          <div class="photo-angle-slot" id="angleSlot3" onclick="document.getElementById('fileInputUpload').click()">
-            <div class="angle-icon-well">
-              <i data-lucide="image" style="width: 22px; height: 22px;"></i>
-            </div>
-            <span class="angle-title">Angle 3</span>
-            <span class="angle-subtitle">Empty Slot</span>
-          </div>
-
-        </div>
-
-        <!-- Action Buttons Row -->
-        <div class="photo-capture-actions-row">
-          <button type="button" class="neu-btn-secondary" onclick="document.getElementById('fileInputCamera').click()">
-            <i data-lucide="camera" style="width: 17px; height: 17px; color: var(--color-terracotta);"></i>
-            <span>Open Camera</span>
-          </button>
-          <button type="button" class="neu-btn-secondary" onclick="document.getElementById('fileInputUpload').click()">
-            <i data-lucide="upload" style="width: 17px; height: 17px; color: var(--color-terracotta);"></i>
-            <span>Upload Photo File</span>
-          </button>
-        </div>
-
-        <!-- Primary Action Audit Button -->
-        <div>
-          <button type="button" class="neu-btn-highlight" id="btnRunVerify" onclick="triggerVerification()">
-            <i data-lucide="shield-check" style="width: 20px; height: 20px; stroke-width: 2.4;"></i>
-            <span>Audit Box &amp; Generate Decision</span>
-          </button>
-          <p class="subtext-disclaimer">
-            Single model observation call &bull; Photos hashed and stored fail-open &bull; Verdicts evaluated by deterministic code
-          </p>
-        </div>
-      </div>
-
-      <!-- Card 3: Verification Output & Results Panel -->
-      <div class="verification-results-panel" id="resultsSection">
+      <!-- Two-Column Split: Left = Station Input Bench, Right = Real-Time Verification Dashboard -->
+      <div class="station-split-grid">
         
-        <!-- Large Operational Verdict Hero Banner -->
-        <div class="decision-hero-banner seal" id="decisionBanner">
-          <div class="decision-icon-large" id="decisionIcon">
-            <i data-lucide="shield-check" style="width: 32px; height: 32px; stroke-width: 2.5;"></i>
+        <!-- LEFT COLUMN: Order Manifest, Photo Angle Viewports & Capture Controls -->
+        <div class="station-col-left">
+          <!-- Unit Header (Back Button + ORD-5001 + UNIT-5001 Badge + Channel/Tenant + Camera Icon) -->
+          <div class="unit-header-bar">
+            <div class="unit-header-left">
+              <button class="btn-back-square" onclick="switchTab('queue')" title="Back to Packing Queue">
+                <i data-lucide="arrow-left" style="width: 20px; height: 20px; stroke-width: 2.2;"></i>
+              </button>
+              <div>
+                <div class="unit-title-row">
+                  <h1 class="unit-order-id" id="manifestOrderId">ORD-5001</h1>
+                  <span class="unit-code-badge" id="manifestPkgId">UNIT-5001</span>
+                </div>
+                <p class="unit-channel-sub">
+                  CHANNEL: <span id="manifestClientId">SHOPIFY</span> &bull; TENANT: <span id="manifestOrgId">ORG_DEMO_ALPHA</span> &bull; <span id="stationBayLabel">STATION-BAY-04</span>
+                </p>
+              </div>
+            </div>
+
+            <button class="btn-camera-square" onclick="triggerVerification()" title="Trigger Overhead Vision Audit">
+              <i data-lucide="camera" style="width: 20px; height: 20px; stroke-width: 2.2;"></i>
+            </button>
           </div>
-          <div class="decision-hero-content">
-            <div class="decision-tag-eyebrow">OPERATIONAL VERDICT</div>
-            <h2 class="decision-main-title" id="decisionTitle">SEAL PACKAGE</h2>
-            <p class="decision-explainer-summary" id="decisionReason">
-              All 7 verification checks passed with grounded multimodal evidence. 100% bijective order match.
-            </p>
+
+          <!-- Card 1: ORDER PACKING MANIFEST -->
+          <div class="manifest-card">
+            <div class="manifest-card-header">
+              <span class="manifest-heading-label">
+                <i data-lucide="box" style="width: 17px; height: 17px; color: var(--color-terracotta);"></i>
+                <span>ORDER PACKING MANIFEST</span>
+              </span>
+              <span class="manifest-count-label" id="manifestItemsCount">2 Line Items</span>
+            </div>
+
+            <div class="manifest-items-list" id="expectedItemsBody">
+              <div class="manifest-item-row">
+                <span class="manifest-item-name">MUG-BLUE</span>
+                <div class="manifest-item-target">Target Qty: <span class="qty-circle">1</span></div>
+              </div>
+              <div class="manifest-item-row">
+                <span class="manifest-item-name">NOTEBOOK-A5-BLACK</span>
+                <div class="manifest-item-target">Target Qty: <span class="qty-circle">1</span></div>
+              </div>
+            </div>
           </div>
-          <div style="text-align: right; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);">
-            <div>AGENT: pack-manager</div>
-            <div id="decisionTime">2026-10-04 18:45:00 UTC</div>
-            <div id="totalLatencyBadge" style="color: var(--color-terracotta); font-weight: 700; margin-top: 2px;">Latency: 0.12 ms</div>
+
+          <!-- Card 2: Pre-Seal Photos (0/3) -->
+          <div class="capture-card">
+            <div class="capture-card-title-group">
+              <h2>Pre-Seal Photos (<span id="photoCountLabel">0</span>/3)</h2>
+              <p>Capture 1 to 3 photos: recommended top-down interior, 45-degree angle, or close-up.</p>
+            </div>
+
+            <!-- Hidden file inputs -->
+            <input type="file" id="fileInputCamera" accept="image/*" capture="environment" style="display: none;" onchange="handlePhotoUpload(this)" />
+            <input type="file" id="fileInputUpload" accept="image/*" multiple style="display: none;" onchange="handlePhotoUpload(this)" />
+
+            <!-- 3 Photo Angle Slots -->
+            <div class="photo-angles-grid">
+              
+              <!-- Angle 1: Top-Down Interior -->
+              <div class="photo-angle-slot" id="angleSlot1" onclick="document.getElementById('fileInputUpload').click()">
+                <div class="laser-line" id="angleLaser1"></div>
+                <div class="angle-icon-well" id="angleIcon1">
+                  <i data-lucide="image" style="width: 22px; height: 22px;"></i>
+                </div>
+                <span class="angle-title">Angle 1</span>
+                <span class="angle-subtitle" id="angleSub1">Empty Slot</span>
+                <div id="angleDetections1"></div>
+              </div>
+
+              <!-- Angle 2: 45° Incline -->
+              <div class="photo-angle-slot" id="angleSlot2" onclick="document.getElementById('fileInputUpload').click()">
+                <div class="angle-icon-well">
+                  <i data-lucide="image" style="width: 22px; height: 22px;"></i>
+                </div>
+                <span class="angle-title">Angle 2</span>
+                <span class="angle-subtitle">Empty Slot</span>
+              </div>
+
+              <!-- Angle 3: Macro Close-Up -->
+              <div class="photo-angle-slot" id="angleSlot3" onclick="document.getElementById('fileInputUpload').click()">
+                <div class="angle-icon-well">
+                  <i data-lucide="image" style="width: 22px; height: 22px;"></i>
+                </div>
+                <span class="angle-title">Angle 3</span>
+                <span class="angle-subtitle">Empty Slot</span>
+              </div>
+
+            </div>
+
+            <!-- Action Buttons Row -->
+            <div class="photo-capture-actions-row">
+              <button type="button" class="neu-btn-secondary" onclick="document.getElementById('fileInputCamera').click()">
+                <i data-lucide="camera" style="width: 17px; height: 17px; color: var(--color-terracotta);"></i>
+                <span>Open Camera</span>
+              </button>
+              <button type="button" class="neu-btn-secondary" onclick="document.getElementById('fileInputUpload').click()">
+                <i data-lucide="upload" style="width: 17px; height: 17px; color: var(--color-terracotta);"></i>
+                <span>Upload Photo File</span>
+              </button>
+            </div>
+
+            <!-- Primary Action Audit Button -->
+            <div>
+              <button type="button" class="neu-btn-highlight" id="btnRunVerify" onclick="triggerVerification()">
+                <i data-lucide="shield-check" style="width: 20px; height: 20px; stroke-width: 2.4;"></i>
+                <span>Audit Box &amp; Generate Decision</span>
+              </button>
+              <p class="subtext-disclaimer">
+                Single model observation call &bull; Photos hashed and stored fail-open &bull; Verdicts evaluated by deterministic code
+              </p>
+            </div>
           </div>
         </div>
 
-        <!-- Expected vs Observed Bijective SKU Manifest Table -->
-        <div style="margin-bottom: 20px;">
-          <div style="font-family: var(--font-heading); font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; color: var(--text-secondary);">
-            Bijective SKU Manifest Verification
-          </div>
-          <div style="overflow-x: auto;">
-            <table class="bijective-table">
-              <thead>
-                <tr>
-                  <th>SKU</th>
-                  <th>Product</th>
-                  <th style="text-align: center;">Expected</th>
-                  <th style="text-align: center;">Observed</th>
-                  <th>Status</th>
-                  <th>Confidence</th>
-                </tr>
-              </thead>
-              <tbody id="quantityComparisonBody">
+        <!-- RIGHT COLUMN: Real-Time AI Verification & Decision Dashboard -->
+        <div class="station-col-right">
+          <!-- Card 3: Verification Output & Results Panel -->
+          <div class="verification-results-panel" id="resultsSection">
+            
+            <!-- Large Operational Verdict Hero Banner -->
+            <div class="decision-hero-banner seal" id="decisionBanner">
+              <div class="decision-icon-large" id="decisionIcon">
+                <i data-lucide="shield-check" style="width: 32px; height: 32px; stroke-width: 2.5;"></i>
+              </div>
+              <div class="decision-hero-content">
+                <div class="decision-tag-eyebrow">OPERATIONAL VERDICT</div>
+                <h2 class="decision-main-title" id="decisionTitle">SEAL PACKAGE</h2>
+                <p class="decision-explainer-summary" id="decisionReason">
+                  All 7 verification checks passed with grounded multimodal evidence. 100% bijective order match.
+                </p>
+              </div>
+              <div style="text-align: right; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);">
+                <div>AGENT: pack-manager</div>
+                <div id="decisionTime">2026-10-04 18:45:00 UTC</div>
+                <div id="totalLatencyBadge" style="color: var(--color-terracotta); font-weight: 700; margin-top: 2px;">Latency: 0.12 ms</div>
+              </div>
+            </div>
+
+            <!-- Expected vs Observed Bijective SKU Manifest Table -->
+            <div style="margin-bottom: 20px;">
+              <div style="font-family: var(--font-heading); font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; color: var(--text-secondary);">
+                Bijective SKU Manifest Verification
+              </div>
+              <div style="overflow-x: auto;">
+                <table class="bijective-table">
+                  <thead>
+                    <tr>
+                      <th>SKU</th>
+                      <th>Product</th>
+                      <th style="text-align: center;">Expected</th>
+                      <th style="text-align: center;">Observed</th>
+                      <th>Status</th>
+                      <th>Confidence</th>
+                    </tr>
+                  </thead>
+                  <tbody id="quantityComparisonBody">
+                    <!-- Dynamically populated -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 7-Stage Deterministic Verification Pipeline -->
+            <div style="margin-bottom: 16px;">
+              <div style="font-family: var(--font-heading); font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; color: var(--text-secondary);">
+                7-Stage Deterministic Verification Pipeline
+              </div>
+              <div class="checks-flow-grid" id="checksGrid">
                 <!-- Dynamically populated -->
-              </tbody>
-            </table>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Footer Proof Card -->
+          <div class="footer-proof-card">
+            <div style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--text-secondary);">
+              <i data-lucide="shield-check" style="width: 16px; height: 16px; color: var(--color-terracotta);"></i>
+              <span>Cryptographic Content Hash (SHA-256) &amp; Sequential Audit Chain Verification.</span>
+            </div>
+            <div>STATION-BAY-04 &bull; Pack Manager PCK</div>
           </div>
         </div>
 
-        <!-- 7-Stage Deterministic Verification Pipeline -->
-        <div style="margin-bottom: 16px;">
-          <div style="font-family: var(--font-heading); font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; color: var(--text-secondary);">
-            7-Stage Deterministic Verification Pipeline
-          </div>
-          <div class="checks-flow-grid" id="checksGrid">
-            <!-- Dynamically populated -->
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Footer Proof Card -->
-      <div class="footer-proof-card">
-        <div style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--text-secondary);">
-          <i data-lucide="shield-check" style="width: 16px; height: 16px; color: var(--color-terracotta);"></i>
-          <span>Cryptographic Content Hash (SHA-256) &amp; Sequential Audit Chain Verification.</span>
-        </div>
-        <div>STATION-BAY-04 &bull; Pack Manager PCK</div>
       </div>
 
     </section>

@@ -235,12 +235,43 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* ==========================================================================
-   Main Stage Container
+   Main Stage Container (Wide Ergonomic Split Layout)
    ========================================================================== */
 .main-stage {
-  max-width: 680px;
+  max-width: 1360px;
   margin: 0 auto;
-  padding: 0 16px;
+  padding: 0 20px;
+}
+
+/* Two-column layout for Station tab: Left = Station Camera & Manifest, Right = Real-Time Verification Dashboard */
+.station-split-grid {
+  display: grid;
+  grid-template-columns: 480px 1fr;
+  gap: 22px;
+  align-items: start;
+}
+
+.station-col-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0px;
+}
+
+.station-col-right {
+  display: flex;
+  flex-direction: column;
+  gap: 0px;
+  position: sticky;
+  top: 86px;
+}
+
+@media (max-width: 1080px) {
+  .station-split-grid {
+    grid-template-columns: 1fr;
+  }
+  .station-col-right {
+    position: static;
+  }
 }
 
 /* Tab Content Visibility */
@@ -672,16 +703,16 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* ==========================================================================
-   Card 3: Verification Output & Results
+   Card 3: Verification Output & Results Dashboard (Right-Side Panel)
    ========================================================================== */
 .verification-results-panel {
   background: var(--card-bg);
   border-radius: var(--card-radius);
-  padding: 22px;
+  padding: 24px;
   box-shadow: var(--shadow-card);
   margin-bottom: 18px;
   border: 1px solid rgba(255, 255, 255, 0.7);
-  display: none;
+  display: block;
 }
 
 .verification-results-panel.visible {
